@@ -27,12 +27,17 @@ const (
 type tweet struct {
 	id      int64
 	href    string    // absolute URL to tweet
-	name    string    // display name
-	user    string    // username (with '@')
+	name    string    // full name
+	user    string    // username (without '@')
 	time    time.Time // approximate (Twitter just gives us age)
-	content string
+	content string    // HTML content
+	text    string    // text from content
 
-	replyUsers []string // empty if not reply
+	replyUsers []string // empty if not reply (without '@')
+}
+
+func (t *tweet) displayName() string {
+	return fmt.Sprintf("%s (@%s)", t.name, t.user)
 }
 
 func (t *tweet) reply() bool {
@@ -85,10 +90,10 @@ func (p *parser) proc(n *html.Node) error {
 			if hasClass(n, "tweet-reply-context") {
 				// The username(s) appear inside <a> elements nested under the div.
 				for _, a := range findNodes(n, func(n *html.Node) bool { return n.Type == html.ElementNode && n.Data == "a" }) {
-					p.curTweet.replyUsers = append(p.curTweet.replyUsers, strings.TrimSpace(getText(a)))
+					p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
 				}
 			} else {
-				p.curTweet.user = strings.TrimSpace(getText(n))
+				p.curTweet.user = bareUser(cleanText(getText(n)))
 			}
 		case elementClass(n, "td", "timestamp"):
 			var err error
@@ -106,7 +111,7 @@ func (p *parser) proc(n *html.Node) error {
 				return fmt.Errorf("failed rendering text: %v", err)
 			}
 			p.curTweet.content = b.String()
-			// TODO: Also produce a plain-text rendering?
+			p.curTweet.text = cleanText(getText(n))
 		}
 	}
 
@@ -178,24 +183,6 @@ func cleanText(s string) string {
 	return s
 }
 
-// rewriteURL rewrites s to be an absolute URL.
-// If s is already absolute, it is returned unchanged.
-func rewriteURL(s string) (string, error) {
-	if s == "" {
-		return "", errors.New("empty URL")
-	}
-	u, err := url.Parse(s)
-	if err != nil {
-		return "", err
-	}
-	if u.IsAbs() {
-		return s, nil
-	}
-	u.Scheme = defaultScheme
-	u.Host = defaultHost
-	return u.String(), nil
-}
-
 // TODO: I'm not sure that seconds or days are used.
 var durationRegexp = regexp.MustCompile(`^(\d+)([smhd])$`)
 
@@ -228,4 +215,22 @@ func parseTime(s string, now time.Time) (time.Time, error) {
 	}
 
 	return time.Time{}, errors.New("unknown format")
+}
+
+// rewriteURL rewrites s to be an absolute URL served by Twitter.
+// If s is already absolute, it is returned unchanged.
+func rewriteURL(s string) (string, error) {
+	if s == "" {
+		return "", errors.New("empty URL")
+	}
+	u, err := url.Parse(s)
+	if err != nil {
+		return "", err
+	}
+	if u.IsAbs() {
+		return s, nil
+	}
+	u.Scheme = defaultScheme
+	u.Host = defaultHost
+	return u.String(), nil
 }

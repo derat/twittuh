@@ -9,9 +9,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/gorilla/feeds"
 )
 
-const urlPrefix = "https://mobile.twitter.com/"
+const (
+	baseFetchURL = "https://mobile.twitter.com/"
+	titleLen     = 80
+)
 
 func main() {
 	flag.Usage = func() {
@@ -20,8 +26,8 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
-	debugFile := flag.String("debug-file", "", "HTML file to parse instead of downloading timeline (for debugging)")
-	maxRequests := flag.Int("max-requests", 3, "Maximum number of pages to request from Twitter")
+	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
+	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	flag.Parse()
 
@@ -37,37 +43,40 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
+	user := bareUser(flag.Arg(0))
+	feedPath := flag.Arg(1)
 
-	user := flag.Arg(0)
-	if len(user) > 0 && user[0] == '@' {
-		user = user[1:]
-	}
-
-	feed := flag.Arg(1)
-	f, err := os.Create(feed)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed creating file: ", err)
-		os.Exit(1)
-	}
-	defer f.Close() // TODO: Check error.
-
-	url := urlPrefix + user
 	oldMaxID := int64(0) // TODO: Figure out which tweets we should get.
-	tweets, err := fetch(url, oldMaxID, *maxRequests)
+	tweets, err := fetch(user, oldMaxID, *maxRequests)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed getting tweets from %v: %v\n", url, err)
+		fmt.Fprintf(os.Stderr, "Failed getting tweets for %v: %v\n", user, err)
 		os.Exit(1)
 	}
+	feed := makeFeed(tweets, user, *replies)
 
-	// TODO: Write feed.
-	for _, t := range tweets {
-		if *replies || !t.reply() {
-			fmt.Printf("%+v\n", t)
-		}
+	f, err := os.Create(feedPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed creating feed: ", err)
+		os.Exit(1)
+	}
+	// TODO: Support RSS vs. Atom vs. JSON Feed.
+	if err := feed.WriteAtom(f); err != nil {
+		f.Close()
+		fmt.Fprintln(os.Stderr, "Failed writing feed: ", err)
+		os.Exit(1)
+	}
+	// TODO: Write trailing comment with max ID, maybe? Need to do something else for JSON, though.
+	if err := f.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed closing feed: ", err)
+		os.Exit(1)
 	}
 }
 
-func fetch(baseURL string, oldMaxID int64, maxRequests int) ([]tweet, error) {
+// fetch downloads and returns tweets from the supplied user's timeline.
+// At most maxRequests will be issued to Twitter. Tweets newer then oldMaxID
+// will be returned if possible. Some number of additional tweets older than
+// it may also be returned.
+func fetch(user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 	f := func(url string) ([]tweet, error) {
 		resp, err := http.Get(url)
 		if err != nil {
@@ -79,6 +88,7 @@ func fetch(baseURL string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 
 	var tweets []tweet
 
+	baseURL := baseFetchURL + user
 	url := baseURL
 	for nr := 0; nr < maxRequests; nr++ {
 		newTweets, err := f(url)
@@ -99,6 +109,54 @@ func fetch(baseURL string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 
 	// TODO: Warn if there's a potential gap because we ran out of requests, maybe.
 	return tweets, nil
+}
+
+// makeFeed returns a format-agnostic feed containing the supplied tweets from the supplied
+// user's timeline. If replies is true, the user's replies will also be included.
+func makeFeed(tweets []tweet, user string, replies bool) *feeds.Feed {
+	// Try to find the user's name from one of the tweets.
+	author := "@" + user
+	for _, t := range tweets {
+		if t.user == user {
+			author = t.displayName()
+			break
+		}
+	}
+
+	descPre := "Tweets"
+	if replies {
+		descPre += " and replies"
+	}
+
+	feed := &feeds.Feed{
+		Title:       author,
+		Link:        &feeds.Link{Href: userURL(user)},
+		Description: fmt.Sprintf("%s from @%v's timeline", descPre, user),
+		Author:      &feeds.Author{Name: author},
+		Updated:     time.Now(),
+		Copyright:   fmt.Sprintf("©%v %v", time.Now().Year(), author),
+	}
+
+	for _, t := range tweets {
+		if !replies && t.reply() {
+			continue
+		}
+		title := t.text
+		if len(title) > titleLen {
+			title = title[:titleLen-1] + "…"
+		}
+		feed.Add(&feeds.Item{
+			Title:       title,
+			Link:        &feeds.Link{Href: t.href}, // Atom's default rel is "alternate"
+			Description: t.text,
+			Author:      &feeds.Author{Name: t.displayName()},
+			Id:          fmt.Sprintf("%v", t.id),
+			Created:     t.time,
+			Content:     t.content,
+		})
+	}
+
+	return feed
 }
 
 // debug reads an HTML timeline from p and dumps its tweets to stdout.
