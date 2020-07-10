@@ -5,19 +5,33 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/feeds"
 )
 
+// feedFormat describes different feed formats that can be written.
+type feedFormat string
+
 const (
-	baseFetchURL = "https://mobile.twitter.com/"
-	titleLen     = 80
+	atomFormat feedFormat = "atom"
+	jsonFormat feedFormat = "json"
+	rssFormat  feedFormat = "rss"
+)
+
+const (
+	baseFetchURL = "https://mobile.twitter.com/" // base timeline URL to fetch
+	titleLen     = 80                            // max length of title text in feed
 )
 
 func main() {
@@ -28,6 +42,7 @@ func main() {
 		flag.PrintDefaults()
 	}
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
+	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	flag.Parse()
@@ -46,29 +61,35 @@ func main() {
 	}
 	user := bareUser(flag.Arg(0))
 	feedPath := flag.Arg(1)
+	format := feedFormat(*formatFlag)
 
-	oldMaxID := int64(0) // TODO: Figure out which tweets we should get.
-	tweets, err := fetch(user, oldMaxID, *maxRequests)
+	oldMaxID, err := getMaxID(feedPath, format)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: couldn't get previous max ID from %v: %v\n", feedPath, err)
+	}
+
+	tweets, err := fetch(user, oldMaxID, *maxRequests)
+	if err == errUnchanged {
+		os.Exit(0)
+	} else if err == errPossibleGap {
+		fmt.Println(os.Stderr, "Warning: possible gap in tweets (run more frequently or increase -max-requests)")
+	} else if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed getting tweets for %v: %v\n", user, err)
 		os.Exit(1)
 	}
-	feed := makeFeed(tweets, user, *replies)
 
 	f, err := os.Create(feedPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed creating feed: ", err)
+		fmt.Fprintln(os.Stderr, "Failed creating feed file: ", err)
 		os.Exit(1)
 	}
-	// TODO: Support RSS vs. Atom vs. JSON Feed.
-	if err := feed.WriteAtom(f); err != nil {
+	if err := writeFeed(f, format, tweets, user, *replies); err != nil {
 		f.Close()
 		fmt.Fprintln(os.Stderr, "Failed writing feed: ", err)
 		os.Exit(1)
 	}
-	// TODO: Write trailing comment with max ID, maybe? Need to do something else for JSON, though.
 	if err := f.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed closing feed: ", err)
+		fmt.Fprintln(os.Stderr, "Failed closing feed file: ", err)
 		os.Exit(1)
 	}
 }
@@ -126,9 +147,9 @@ func fetch(user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 	return tweets, err
 }
 
-// makeFeed returns a format-agnostic feed containing the supplied tweets from the supplied
-// user's timeline. If replies is true, the user's replies will also be included.
-func makeFeed(tweets []tweet, user string, replies bool) *feeds.Feed {
+// writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
+// If replies is true, the user's replies will also be included.
+func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, replies bool) error {
 	// Try to find the user's name from one of the tweets.
 	author := "@" + user
 	for _, t := range tweets {
@@ -138,18 +159,19 @@ func makeFeed(tweets []tweet, user string, replies bool) *feeds.Feed {
 		}
 	}
 
-	descPre := "Tweets"
+	feedDesc := "Tweets"
 	if replies {
-		descPre += " and replies"
+		feedDesc += " and replies"
 	}
+	feedDesc += fmt.Sprintf(" from @%v's timeline", user)
 
 	feed := &feeds.Feed{
 		Title:       author,
 		Link:        &feeds.Link{Href: userURL(user)},
-		Description: fmt.Sprintf("%s from @%v's timeline", descPre, user),
+		Description: feedDesc,
 		Author:      &feeds.Author{Name: author},
 		Updated:     time.Now(),
-		Copyright:   fmt.Sprintf("©%v %v", time.Now().Year(), author),
+		Copyright:   fmt.Sprintf("© %v %v", time.Now().Year(), author),
 	}
 
 	for _, t := range tweets {
@@ -171,7 +193,67 @@ func makeFeed(tweets []tweet, user string, replies bool) *feeds.Feed {
 		})
 	}
 
-	return feed
+	var maxID int64
+	if len(tweets) > 0 {
+		maxID = tweets[0].id
+	}
+
+	switch format {
+	case jsonFormat:
+		// Embed the max ID in the feed's UserComment field.
+		// The marshaling here matches feeds.Feed.WriteJSON().
+		jf := (&feeds.JSON{Feed: feed}).JSONFeed()
+		jf.UserComment = fmt.Sprintf("max id %v", maxID)
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		return enc.Encode(jf)
+	case atomFormat, rssFormat:
+		var err error
+		if format == atomFormat {
+			err = feed.WriteAtom(w)
+		} else {
+			err = feed.WriteRss(w)
+		}
+		if err != nil {
+			return err
+		}
+		// Embed the max ID in a trailing comment.
+		_, err = fmt.Fprintf(w, "\n<!-- max id %v -->\n", maxID)
+		return err
+	default:
+		return fmt.Errorf("unknown format %q", format)
+	}
+}
+
+// These match the comments added by writeFeed.
+var xmlMaxIDRegexp = regexp.MustCompile(`<!--\s+max\s+id\s+(\d+)\s+-->\s*$`)
+var jsonMaxIDRegexp = regexp.MustCompile(`^max id (\d+)$`)
+
+// getMaxID attempts to find a maximum tweet ID embedded in p, a feed written by writeFeed
+// in the supplied format. If the file does not exist, 0 is returned with a nil error.
+func getMaxID(p string, format feedFormat) (int64, error) {
+	b, err := ioutil.ReadFile(p)
+	if os.IsNotExist(err) {
+		return 0, nil
+	} else if err != nil {
+		return 0, err
+	}
+
+	var matches []string
+	switch format {
+	case atomFormat, rssFormat:
+		matches = xmlMaxIDRegexp.FindStringSubmatch(string(b))
+	case jsonFormat:
+		var feed feeds.JSONFeed
+		if err := json.Unmarshal(b, &feed); err != nil {
+			return 0, errors.New("failed unmarshaling feed")
+		}
+		matches = jsonMaxIDRegexp.FindStringSubmatch(feed.UserComment)
+	}
+	if matches == nil {
+		return 0, errors.New("couldn't find max ID in comment")
+	}
+	return strconv.ParseInt(matches[1], 10, 64)
 }
 
 // debug reads an HTML timeline from p and dumps its tweets to stdout.
