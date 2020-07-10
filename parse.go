@@ -35,6 +35,10 @@ type tweet struct {
 	replyUsers []string // empty if not reply
 }
 
+func (t *tweet) reply() bool {
+	return len(t.replyUsers) > 0
+}
+
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
 func parse(r io.Reader) ([]tweet, error) {
 	root, err := html.Parse(r)
@@ -87,12 +91,11 @@ func (p *parser) proc(n *html.Node) error {
 				p.curTweet.user = strings.TrimSpace(getText(n))
 			}
 		case elementClass(n, "td", "timestamp"):
+			var err error
 			s := strings.TrimSpace(getText(n))
-			d, err := parseDuration(s)
-			if err != nil {
+			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
 				return fmt.Errorf("bad time %q: %v", s, err)
 			}
-			p.curTweet.time = time.Now().Add(-d)
 		case elementClass(n, "div", "tweet-text"):
 			var err error
 			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
@@ -193,33 +196,36 @@ func rewriteURL(s string) (string, error) {
 	return u.String(), nil
 }
 
+// TODO: I'm not sure that seconds or days are used.
 var durationRegexp = regexp.MustCompile(`^(\d+)([smhd])$`)
 
-// parseDuration parses a Twitter-supplied "timestamp", e.g. "23m" or "2h".
-func parseDuration(s string) (time.Duration, error) {
-	matches := durationRegexp.FindStringSubmatch(s)
-	if matches == nil {
-		return 0, errors.New("invalid duration")
+// parseTime parses a Twitter-supplied "timestamp".
+// These can take a bunch of forms, e.g. "23m", "2h", "Jul 9", etc.
+func parseTime(s string, now time.Time) (time.Time, error) {
+	if ms := durationRegexp.FindStringSubmatch(s); ms != nil {
+		quant, err := strconv.Atoi(ms[1])
+		if err != nil {
+			return time.Time{}, errors.New("bad quantity")
+		}
+		var units time.Duration
+		switch ms[2] {
+		case "s":
+			units = time.Second
+		case "m":
+			units = time.Minute
+		case "h":
+			units = time.Hour
+		case "d":
+			units = 24 * time.Hour // busted for DST, but what can you do
+		default:
+			return time.Time{}, errors.New("bad units") // shouldn't happen
+		}
+		return now.Add(-1 * time.Duration(quant) * units), nil
 	}
 
-	v, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return 0, fmt.Errorf("invalid value %q", matches[1])
+	if t, err := time.Parse("Jan 2", s); err == nil {
+		return t, nil
 	}
 
-	var units time.Duration
-	switch matches[2] {
-	case "s":
-		units = time.Second
-	case "m":
-		units = time.Minute
-	case "h":
-		units = time.Hour
-	case "d":
-		units = 24 * time.Hour // busted for DST, but what can you do
-	default:
-		return 0, fmt.Errorf("invalid units %q", matches[2]) // shouldn't happen
-	}
-
-	return time.Duration(v) * units, nil
+	return time.Time{}, errors.New("unknown format")
 }
