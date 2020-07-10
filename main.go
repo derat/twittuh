@@ -5,14 +5,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -41,14 +42,21 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
+	cacheDir := flag.String("cache-dir", filepath.Join(os.Getenv("HOME"), ".cache/twittuh"), "Directory for caching downloads")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	flag.Parse()
 
+	ft, err := newFetcher(*cacheDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed initializing fetcher: ", err)
+		os.Exit(1)
+	}
+
 	if *debugFile != "" {
-		if err := debug(*debugFile, *replies); err != nil {
+		if err := debug(ft, *debugFile, *replies); err != nil {
 			fmt.Fprintln(os.Stderr, "Failed reading timeline: ", err)
 			os.Exit(1)
 		}
@@ -67,8 +75,7 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: couldn't get previous max ID from %v: %v\n", feedPath, err)
 	}
-
-	tweets, err := fetch(user, oldMaxID, *maxRequests)
+	tweets, err := getTweets(ft, user, oldMaxID, *maxRequests)
 	if err == errUnchanged {
 		os.Exit(0)
 	} else if err == errPossibleGap {
@@ -99,7 +106,7 @@ var (
 	errPossibleGap = errors.New("possible gap in tweets")
 )
 
-// fetch downloads and returns tweets from the supplied user's timeline.
+// getTweets downloads and returns tweets from the supplied user's timeline.
 // At most maxRequests will be issued to Twitter.
 //
 // If the ID of the latest tweet matches oldMaxID, errUnchanged is returned
@@ -108,22 +115,16 @@ var (
 // If there is a possible gap between the tweets returned by the last invocation
 // and the tweets returned by this invocation, errPossibleGap is returned
 // alongside all the tweet that were fetched.
-func fetch(user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
-	f := func(url string) ([]tweet, error) {
-		resp, err := http.Get(url)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		return parse(resp.Body)
-	}
-
+func getTweets(ft *fetcher, user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 	var tweets []tweet
-
 	baseURL := baseFetchURL + user
 	url := baseURL
 	for nr := 0; nr < maxRequests; nr++ {
-		newTweets, err := f(url)
+		b, err := ft.fetch(url, false /* useCache */)
+		if err != nil {
+			return tweets, err
+		}
+		newTweets, err := parse(bytes.NewReader(b), ft)
 		if err != nil {
 			return tweets, err
 		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
@@ -178,19 +179,26 @@ func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, repl
 		if !replies && t.reply() {
 			continue
 		}
-		title := t.text
-		if len(title) > titleLen {
-			title = title[:titleLen-1] + "…"
-		}
-		feed.Add(&feeds.Item{
-			Title:       title,
+
+		item := &feeds.Item{
+			Title:       t.text,
 			Link:        &feeds.Link{Href: t.href}, // Atom's default rel is "alternate"
 			Description: t.text,
 			Author:      &feeds.Author{Name: t.displayName()},
 			Id:          fmt.Sprintf("%v", t.id),
 			Created:     t.time,
 			Content:     t.content,
-		})
+		}
+		if len(item.Title) > titleLen {
+			item.Title = item.Title[:titleLen-1] + "…"
+		}
+		if t.imageURL != "" {
+			item.Enclosure = &feeds.Enclosure{
+				Url:  t.imageURL,
+				Type: t.imageType,
+			}
+		}
+		feed.Add(item)
 	}
 
 	var maxID int64
@@ -257,14 +265,14 @@ func getMaxID(p string, format feedFormat) (int64, error) {
 }
 
 // debug reads an HTML timeline from p and dumps its tweets to stdout.
-func debug(p string, replies bool) error {
+func debug(ft *fetcher, p string, replies bool) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	tweets, err := parse(f)
+	tweets, err := parse(f, ft)
 	if err != nil {
 		return err
 	}

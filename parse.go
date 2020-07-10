@@ -9,7 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/url"
+	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +36,9 @@ type tweet struct {
 	content string    // HTML content
 	text    string    // text from content
 
+	imageURL  string // URL of embedded image
+	imageType string // inferred content type of imageURL
+
 	replyUsers []string // empty if not reply (without '@')
 }
 
@@ -45,12 +51,12 @@ func (t *tweet) reply() bool {
 }
 
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
-func parse(r io.Reader) ([]tweet, error) {
+func parse(r io.Reader, ft *fetcher) ([]tweet, error) {
 	root, err := html.Parse(r)
 	if err != nil {
 		return nil, err
 	}
-	p := parser{}
+	p := parser{fetcher: ft}
 	if err := p.proc(root); err != nil {
 		return nil, err
 	}
@@ -58,6 +64,7 @@ func parse(r io.Reader) ([]tweet, error) {
 }
 
 type parser struct {
+	fetcher  *fetcher
 	timeline bool    // true while in timeline div
 	curTweet *tweet  // in-progress tweet
 	tweets   []tweet // completed tweets
@@ -66,12 +73,12 @@ type parser struct {
 func (p *parser) proc(n *html.Node) error {
 	switch {
 	case !p.timeline:
-		if elementClass(n, "div", "timeline") {
+		if isElement(n, "div") && hasClass(n, "timeline") {
 			p.timeline = true
 			defer func() { p.timeline = false }()
 		}
 	case p.curTweet == nil:
-		if elementClass(n, "table", "tweet") {
+		if isElement(n, "table") && hasClass(n, "tweet") {
 			href, err := rewriteURL(getAttr(n, "href"))
 			if err != nil {
 				return err
@@ -84,24 +91,24 @@ func (p *parser) proc(n *html.Node) error {
 		}
 	default:
 		switch {
-		case elementClass(n, "strong", "fullname"):
+		case isElement(n, "strong") && hasClass(n, "fullname"):
 			p.curTweet.name = cleanText(getText(n))
-		case elementClass(n, "div", "username"):
+		case isElement(n, "div") && hasClass(n, "username"):
 			if hasClass(n, "tweet-reply-context") {
 				// The username(s) appear inside <a> elements nested under the div.
-				for _, a := range findNodes(n, func(n *html.Node) bool { return n.Type == html.ElementNode && n.Data == "a" }) {
+				for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
 					p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
 				}
 			} else {
 				p.curTweet.user = bareUser(cleanText(getText(n)))
 			}
-		case elementClass(n, "td", "timestamp"):
+		case isElement(n, "td") && hasClass(n, "timestamp"):
 			var err error
 			s := strings.TrimSpace(getText(n))
 			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
 				return fmt.Errorf("bad time %q: %v", s, err)
 			}
-		case elementClass(n, "div", "tweet-text"):
+		case isElement(n, "div") && hasClass(n, "tweet-text"):
 			var err error
 			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
 				return fmt.Errorf("failed parsing ID: %v", err)
@@ -112,6 +119,11 @@ func (p *parser) proc(n *html.Node) error {
 			}
 			p.curTweet.content = b.String()
 			p.curTweet.text = cleanText(getText(n))
+			if p.curTweet.imageURL, err = p.getImageEmbed(n); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: couldn't get image from %v: %v\n", p.curTweet.href, err)
+			} else if p.curTweet.imageURL != "" {
+				p.curTweet.imageType = guessContentType(p.curTweet.imageURL)
+			}
 		}
 	}
 
@@ -121,6 +133,51 @@ func (p *parser) proc(n *html.Node) error {
 		}
 	}
 	return nil
+}
+
+func (p *parser) getImageEmbed(n *html.Node) (string, error) {
+	// Look for a link to the page containing the image.
+	embeds := findNodes(n, func(n *html.Node) bool {
+		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
+	})
+	if len(embeds) == 0 {
+		return "", nil
+	}
+	us := getAttr(embeds[0], "data-url")
+	if us == "" {
+		return "", errors.New("no data-url attribute")
+	}
+	u, err := url.Parse(us)
+	if err != nil {
+		return "", err
+	}
+
+	// Rewrite host to get simple HTML version of image page.
+	if u.Host == "twitter.com" {
+		u.Host = "mobile.twitter.com"
+	}
+	if u.Host != "mobile.twitter.com" || !strings.Contains(u.Path, "/photo/") {
+		return "", nil
+	}
+
+	// Download and parse the image page to look for a <div class="media"> with an <img> inside of it.
+	b, err := p.fetcher.fetch(u.String(), true /* useCache */)
+	if err != nil {
+		return "", err
+	}
+	root, err := html.Parse(bytes.NewReader(b))
+	if err != nil {
+		return "", err
+	}
+	media := findNodes(root, func(n *html.Node) bool { return isElement(n, "div") && hasClass(n, "media") })
+	if len(media) == 0 {
+		return "", nil
+	}
+	imgs := findNodes(media[0], func(n *html.Node) bool { return isElement(n, "img") })
+	if len(imgs) == 0 {
+		return "", nil
+	}
+	return getAttr(imgs[0], "src"), nil
 }
 
 // findNodes returns node within the tree rooted at n for which f returns true.
@@ -136,9 +193,9 @@ func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 	return ns
 }
 
-// elementClass returns true if n is an HTML element with the supplied tag type and CSS class.
-func elementClass(n *html.Node, tag, class string) bool {
-	return n.Type == html.ElementNode && n.Data == tag && hasClass(n, class)
+// isElement returns true if n is an HTML element with the supplied tag type.
+func isElement(n *html.Node, tag string) bool {
+	return n.Type == html.ElementNode && n.Data == tag
 }
 
 // hasClass returns true if n's "class" attribute contains class.
@@ -233,4 +290,23 @@ func rewriteURL(s string) (string, error) {
 	u.Scheme = defaultScheme
 	u.Host = defaultHost
 	return u.String(), nil
+}
+
+// guessContentType infers the content type of the file at the supplied URL.
+// An empty string is returned if the type can't be determined.
+func guessContentType(u string) string {
+	url, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+
+	// pbs.twimg.com URLs often end with ":small"; strip it off to get at the extension.
+	p := url.Path
+	for _, suf := range []string{":small"} {
+		if strings.HasSuffix(p, suf) {
+			p = p[:len(p)-len(suf)]
+			break
+		}
+	}
+	return mime.TypeByExtension(path.Ext(p))
 }
