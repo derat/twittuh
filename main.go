@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -72,10 +73,20 @@ func main() {
 	}
 }
 
+var (
+	errUnchanged   = errors.New("no new tweets")
+	errPossibleGap = errors.New("possible gap in tweets")
+)
+
 // fetch downloads and returns tweets from the supplied user's timeline.
-// At most maxRequests will be issued to Twitter. Tweets newer then oldMaxID
-// will be returned if possible. Some number of additional tweets older than
-// it may also be returned.
+// At most maxRequests will be issued to Twitter.
+//
+// If the ID of the latest tweet matches oldMaxID, errUnchanged is returned
+// alongside an empty slice. This indicates that no new Tweets are present.
+//
+// If there is a possible gap between the tweets returned by the last invocation
+// and the tweets returned by this invocation, errPossibleGap is returned
+// alongside all the tweet that were fetched.
 func fetch(user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 	f := func(url string) ([]tweet, error) {
 		resp, err := http.Get(url)
@@ -94,21 +105,25 @@ func fetch(user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
 		newTweets, err := f(url)
 		if err != nil {
 			return tweets, err
-		} else if len(newTweets) == 0 {
-			break
+		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
+			return tweets, nil
+		}
+
+		// Bail out early if there are no new tweets.
+		if len(tweets) == 0 && newTweets[0].id == oldMaxID {
+			return nil, errUnchanged
 		}
 
 		tweets = append(tweets, newTweets...)
-
-		if minID := newTweets[len(newTweets)-1].id; minID <= oldMaxID+1 {
-			break
-		} else {
-			url = fmt.Sprintf("%s?max_id=%v", baseURL, minID-1)
-		}
+		minID := newTweets[len(newTweets)-1].id
+		url = fmt.Sprintf("%s?max_id=%v", baseURL, minID-1)
 	}
 
-	// TODO: Warn if there's a potential gap because we ran out of requests, maybe.
-	return tweets, nil
+	var err error
+	if oldMaxID > 0 && tweets[len(tweets)-1].id > oldMaxID+1 {
+		err = errPossibleGap
+	}
+	return tweets, err
 }
 
 // makeFeed returns a format-agnostic feed containing the supplied tweets from the supplied
