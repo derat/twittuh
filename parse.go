@@ -9,16 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime"
 	"net/url"
-	"os"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 const (
@@ -35,9 +33,6 @@ type tweet struct {
 	time    time.Time // approximate (Twitter just gives us age)
 	content string    // HTML content
 	text    string    // text from content
-
-	imageURL  string // URL of embedded image
-	imageType string // inferred content type of imageURL
 
 	replyUsers []string // empty if not reply (without '@')
 }
@@ -115,17 +110,15 @@ func (p *parser) proc(n *html.Node) error {
 		if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
 			return fmt.Errorf("failed parsing ID: %v", err)
 		}
+		// Extract a plain-text version of the tweet first.
+		p.curTweet.text = cleanText(getText(n))
+
+		addEmbedded(n, p.fetcher)
 		var b bytes.Buffer
 		if err := html.Render(&b, n); err != nil {
 			return fmt.Errorf("failed rendering text: %v", err)
 		}
 		p.curTweet.content = b.String()
-		p.curTweet.text = cleanText(getText(n))
-		if p.curTweet.imageURL, err = p.getImageEmbed(n); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: couldn't get image from %v: %v\n", p.curTweet.href, err)
-		} else if p.curTweet.imageURL != "" {
-			p.curTweet.imageType = guessContentType(p.curTweet.imageURL)
-		}
 		return nil // skip contents
 	}
 
@@ -294,21 +287,63 @@ func rewriteURL(s string) (string, error) {
 	return u.String(), nil
 }
 
-// guessContentType infers the content type of the file at the supplied URL.
-// An empty string is returned if the type can't be determined.
-func guessContentType(u string) string {
-	url, err := url.Parse(u)
-	if err != nil {
-		return ""
+// addEmbedded adds embedded content that's linked within n.
+func addEmbedded(n *html.Node, ft *fetcher) {
+	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
+	for _, link := range findNodes(n, func(n *html.Node) bool {
+		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
+	}) {
+		url, err := getImageURL(getAttr(link, "data-url"), ft)
+		if err != nil || url == "" {
+			continue // TODO: Log error.
+		}
+		// Replace the link's children (formerly the photo page URL) with an <img> tag.
+		for link.LastChild != nil {
+			link.RemoveChild(link.LastChild)
+		}
+		link.AppendChild(&html.Node{
+			Type:     html.ElementNode,
+			DataAtom: atom.Img,
+			Data:     "img",
+			Attr:     []html.Attribute{html.Attribute{Key: "src", Val: url}},
+		})
+		// Make sure the link isn't displayed inline.
+		link.Attr = append(link.Attr, html.Attribute{Key: "style", Val: "display:block"})
 	}
 
-	// pbs.twimg.com URLs often end with ":small"; strip it off to get at the extension.
-	p := url.Path
-	for _, suf := range []string{":small"} {
-		if strings.HasSuffix(p, suf) {
-			p = p[:len(p)-len(suf)]
-			break
-		}
+	// TODO: Also handle embedded tweets.
+}
+
+// getImageURL attempts to extract the underlying URL to the image from the supplied photo
+// page URL, e.g. "https://twitter.com/biff_tannen/status/12813232543132445323/photo/1".
+// If the URL is not a photo page, an empty string is returned.
+func getImageURL(u string, ft *fetcher) (string, error) {
+	// Check if we got a photo page URL.
+	url, err := url.Parse(u)
+	if err != nil {
+		return "", nil
 	}
-	return mime.TypeByExtension(path.Ext(p))
+	if url.Host == "twitter.com" {
+		url.Host = "mobile.twitter.com" // get simple HTML page
+	} else if url.Host != "mobile.twitter.com" {
+		return "", nil
+	}
+	if !strings.Contains(url.Path, "/photo/") {
+		return "", nil
+	}
+
+	// Download and parse the image page to look for a <div class="media"> with an <img> inside of it.
+	b, err := ft.fetch(url.String(), true /* useCache */)
+	if err != nil {
+		return "", err
+	}
+	if root, err := html.Parse(bytes.NewReader(b)); err != nil {
+		return "", err
+	} else if media := findNodes(root, func(n *html.Node) bool { return isElement(n, "div") && hasClass(n, "media") }); len(media) == 0 {
+		return "", errors.New("didn't find media div")
+	} else if imgs := findNodes(media[0], func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) == 0 {
+		return "", errors.New("didn't find image")
+	} else {
+		return getAttr(imgs[0], "src"), nil
+	}
 }

@@ -193,12 +193,6 @@ func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, repl
 		if len(item.Title) > titleLen {
 			item.Title = item.Title[:titleLen-1] + "…"
 		}
-		if t.imageURL != "" {
-			item.Enclosure = &feeds.Enclosure{
-				Url:  t.imageURL,
-				Type: t.imageType,
-			}
-		}
 		feed.Add(item)
 	}
 
