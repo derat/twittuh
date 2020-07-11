@@ -47,6 +47,7 @@ func main() {
 	}
 	cacheDir := flag.String("cache-dir", filepath.Join(os.Getenv("HOME"), ".cache/twittuh"), "Directory for caching downloads")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
+	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
@@ -73,10 +74,13 @@ func main() {
 	feedPath := flag.Arg(1)
 	format := feedFormat(*formatFlag)
 
-	oldMaxID, err := getMaxID(feedPath, format)
-	if err != nil {
-		log.Printf("Couldn't get previous max ID from %v: %v", feedPath, err)
+	var oldMaxID int64
+	if !*force {
+		if oldMaxID, err = getMaxID(feedPath, format); err != nil {
+			log.Printf("Couldn't get old max ID from %v: %v", feedPath, err)
+		}
 	}
+
 	debugf("Getting timeline for %v with old max ID %v", user, oldMaxID)
 	prof, tweets, err := getTimeline(ft, user, oldMaxID, *maxRequests)
 	if err == errUnchanged {
@@ -87,7 +91,6 @@ func main() {
 	} else if err != nil {
 		log.Fatalf("Failed getting tweets for %v: %v", user, err)
 	}
-	debugf("Parsed %v tweet(s)", len(tweets))
 
 	f, err := os.Create(feedPath)
 	if err != nil {
@@ -143,6 +146,7 @@ func getTimeline(ft *fetcher, user string, oldMaxID int64, maxRequests int) (pro
 		minID := newTweets[len(newTweets)-1].id
 		url = fmt.Sprintf("%s?max_id=%v", baseURL, minID-1)
 	}
+	debugf("Parsed %v tweet(s)", len(tweets))
 
 	var err error
 	if oldMaxID > 0 && tweets[len(tweets)-1].id > oldMaxID+1 {
