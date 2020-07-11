@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -35,6 +36,8 @@ const (
 	titleLen     = 80                            // max length of title text in feed
 )
 
+var verbose = false // enable verbose logging
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <USER> <FILE>\n", os.Args[0])
@@ -47,18 +50,17 @@ func main() {
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
 	ft, err := newFetcher(*cacheDir)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed initializing fetcher: ", err)
-		os.Exit(1)
+		log.Fatal("Failed initializing fetcher: ", err)
 	}
 
 	if *debugFile != "" {
-		if err := debug(ft, *debugFile, *replies); err != nil {
-			fmt.Fprintln(os.Stderr, "Failed reading timeline: ", err)
-			os.Exit(1)
+		if err := debugParse(ft, *debugFile, *replies); err != nil {
+			log.Fatal("Failed reading timeline: ", err)
 		}
 		os.Exit(0)
 	}
@@ -73,31 +75,30 @@ func main() {
 
 	oldMaxID, err := getMaxID(feedPath, format)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: couldn't get previous max ID from %v: %v\n", feedPath, err)
+		log.Printf("Couldn't get previous max ID from %v: %v", feedPath, err)
 	}
+	debugf("Getting timeline for %v with old max ID %v", user, oldMaxID)
 	prof, tweets, err := getTimeline(ft, user, oldMaxID, *maxRequests)
 	if err == errUnchanged {
+		debug("No new tweets; exiting without writing feed")
 		os.Exit(0)
 	} else if err == errPossibleGap {
-		fmt.Println(os.Stderr, "Warning: possible gap in tweets (run more frequently or increase -max-requests)")
+		log.Print("Possible gap in tweets (run more frequently or increase -max-requests)")
 	} else if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed getting tweets for %v: %v\n", user, err)
-		os.Exit(1)
+		log.Fatalf("Failed getting tweets for %v: %v", user, err)
 	}
+	debugf("Parsed %v tweet(s)", len(tweets))
 
 	f, err := os.Create(feedPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed creating feed file: ", err)
-		os.Exit(1)
+		log.Fatal("Failed creating feed file: ", err)
 	}
 	if err := writeFeed(f, format, prof, tweets, user, *replies); err != nil {
 		f.Close()
-		fmt.Fprintln(os.Stderr, "Failed writing feed: ", err)
-		os.Exit(1)
+		log.Fatal("Failed writing feed: ", err)
 	}
 	if err := f.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed closing feed file: ", err)
-		os.Exit(1)
+		log.Fatal("Failed closing feed file: ", err)
 	}
 }
 
@@ -197,6 +198,8 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet, use
 		maxID = tweets[0].id
 	}
 
+	debugf("Writing feed with %v item(s) and max ID %v", len(feed.Items), maxID)
+
 	switch format {
 	case jsonFormat:
 		// Embed the max ID in the feed's UserComment field.
@@ -257,8 +260,8 @@ func getMaxID(p string, format feedFormat) (int64, error) {
 	return strconv.ParseInt(matches[1], 10, 64)
 }
 
-// debug reads an HTML timeline from p and dumps its tweets to stdout.
-func debug(ft *fetcher, p string, replies bool) error {
+// debugParse reads an HTML timeline from p and dumps its tweets to stdout.
+func debugParse(ft *fetcher, p string, replies bool) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err
@@ -277,4 +280,18 @@ func debug(ft *fetcher, p string, replies bool) error {
 		}
 	}
 	return nil
+}
+
+// debug logs the supplied arguments using log.Print if verbose logging is enabled.
+func debug(args ...interface{}) {
+	if verbose {
+		log.Print(args...)
+	}
+}
+
+// debugf logs the supplied format string and args using log.Printf if verbose logging is enabled.
+func debugf(format string, args ...interface{}) {
+	if verbose {
+		log.Printf(format, args...)
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -293,8 +294,11 @@ func addEmbedded(n *html.Node, ft *fetcher) {
 		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
 	}) {
 		url, err := getImageURL(getAttr(link, "data-url"), ft)
-		if err != nil || url == "" {
-			continue // TODO: Log error.
+		if url == "" || err != nil {
+			if err != nil {
+				log.Print("Got error while looking for image URL: ", err)
+			}
+			continue
 		}
 		// Replace the link's children (formerly the photo page URL) with an <img> tag.
 		for link.LastChild != nil {
@@ -332,16 +336,14 @@ func getImageURL(u string, ft *fetcher) (string, error) {
 	}
 
 	// Download and parse the image page to look for a <div class="media"> with an <img> inside of it.
-	b, err := ft.fetch(url.String(), true /* useCache */)
-	if err != nil {
-		return "", err
-	}
-	if root, err := html.Parse(bytes.NewReader(b)); err != nil {
-		return "", err
+	if b, err := ft.fetch(url.String(), true /* useCache */); err != nil {
+		return "", fmt.Errorf("couldn't fetch %s: %v", url, err)
+	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
+		return "", fmt.Errorf("couldn't parse %s: %v", url, err)
 	} else if media := findNodes(root, func(n *html.Node) bool { return isElement(n, "div") && hasClass(n, "media") }); len(media) == 0 {
-		return "", errors.New("didn't find media div")
+		return "", fmt.Errorf("didn't find media div in %s", url)
 	} else if imgs := findNodes(media[0], func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) == 0 {
-		return "", errors.New("didn't find image")
+		return "", fmt.Errorf("didn't find image in %s", url)
 	} else {
 		return getAttr(imgs[0], "src"), nil
 	}

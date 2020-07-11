@@ -36,12 +36,14 @@ func (ft *fetcher) fetch(u string, useCache bool) ([]byte, error) {
 	if useCache {
 		b, err := ioutil.ReadFile(cp)
 		if err == nil {
+			debugf("Got %v from cache", u)
 			return b, nil
 		} else if err != nil && !os.IsNotExist(err) {
 			return nil, err
 		}
 	}
 
+	debug("Fetching ", u)
 	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
