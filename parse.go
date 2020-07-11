@@ -308,7 +308,29 @@ func rewriteURL(s string) (string, error) {
 
 // addEmbeddedContent adds embedded content that's linked within n.
 func addEmbeddedContent(n *html.Node, ft *fetcher) {
+	// Look for embedded tweets: <a data-expanded-url="https://twitter.com/someuser/status/...">.
+	for _, link := range findNodes(n, func(n *html.Node) bool {
+		return isElement(n, "a") && getAttr(n, "data-expanded-url") != ""
+	}) {
+		url := getAttr(link, "data-url")
+		content, err := getTweetContent(url, ft)
+		if content == nil || err != nil {
+			if err != nil {
+				log.Print("Couldn't fetch tweet content: ", err)
+			}
+			continue
+		}
+		// Insert the content after the link with styling similar to what Twitter uses.
+		debug("Adding embedded tweet ", url)
+		content.Attr = append(content.Attr, html.Attribute{
+			Key: "style",
+			Val: "border:solid 1px #ccd6dd; border-radius:15px; margin:10px; padding:10px",
+		})
+		link.Parent.InsertBefore(content, link.NextSibling)
+	}
+
 	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
+	// We do this after embedding tweets so we can insert their images too.
 	for _, link := range findNodes(n, func(n *html.Node) bool {
 		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
 	}) {
@@ -334,27 +356,6 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 		link.Attr = append(link.Attr, html.Attribute{
 			Key: "style",
 			Val: "display:block; margin:10px",
-		})
-	}
-
-	// Look for embedded tweets: <a data-expanded-url="https://twitter.com/someuser/status/...">.
-	for _, link := range findNodes(n, func(n *html.Node) bool {
-		return isElement(n, "a") && getAttr(n, "data-expanded-url") != ""
-	}) {
-		url := getAttr(link, "data-url")
-		content, err := getTweetContent(url, ft)
-		if content == nil || err != nil {
-			if err != nil {
-				log.Print("Couldn't fetch tweet content: ", err)
-			}
-			continue
-		}
-		// Append the content inside the link with styling similar to what Twitter uses.
-		debug("Adding embedded tweet ", url)
-		link.AppendChild(content)
-		link.Attr = append(link.Attr, html.Attribute{
-			Key: "style",
-			Val: "border:solid 1px #ccd6dd; border-radius:15px; display:block; margin:10px; padding:10px",
 		})
 	}
 }
