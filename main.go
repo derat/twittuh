@@ -75,7 +75,7 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: couldn't get previous max ID from %v: %v\n", feedPath, err)
 	}
-	tweets, err := getTweets(ft, user, oldMaxID, *maxRequests)
+	prof, tweets, err := getTimeline(ft, user, oldMaxID, *maxRequests)
 	if err == errUnchanged {
 		os.Exit(0)
 	} else if err == errPossibleGap {
@@ -90,7 +90,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Failed creating feed file: ", err)
 		os.Exit(1)
 	}
-	if err := writeFeed(f, format, tweets, user, *replies); err != nil {
+	if err := writeFeed(f, format, prof, tweets, user, *replies); err != nil {
 		f.Close()
 		fmt.Fprintln(os.Stderr, "Failed writing feed: ", err)
 		os.Exit(1)
@@ -115,25 +115,27 @@ var (
 // If there is a possible gap between the tweets returned by the last invocation
 // and the tweets returned by this invocation, errPossibleGap is returned
 // alongside all the tweet that were fetched.
-func getTweets(ft *fetcher, user string, oldMaxID int64, maxRequests int) ([]tweet, error) {
+func getTimeline(ft *fetcher, user string, oldMaxID int64, maxRequests int) (profile, []tweet, error) {
+	var prof profile
 	var tweets []tweet
+
 	baseURL := baseFetchURL + user
 	url := baseURL
 	for nr := 0; nr < maxRequests; nr++ {
 		b, err := ft.fetch(url, false /* useCache */)
 		if err != nil {
-			return tweets, err
+			return prof, tweets, err
 		}
-		newTweets, err := parse(bytes.NewReader(b), ft)
-		if err != nil {
-			return tweets, err
+		var newTweets []tweet
+		if prof, newTweets, err = parse(bytes.NewReader(b), ft); err != nil {
+			return prof, tweets, err
 		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
-			return tweets, nil
+			return prof, tweets, nil
 		}
 
 		// Bail out early if there are no new tweets.
 		if len(tweets) == 0 && newTweets[0].id == oldMaxID {
-			return nil, errUnchanged
+			return prof, nil, errUnchanged
 		}
 
 		tweets = append(tweets, newTweets...)
@@ -145,21 +147,13 @@ func getTweets(ft *fetcher, user string, oldMaxID int64, maxRequests int) ([]twe
 	if oldMaxID > 0 && tweets[len(tweets)-1].id > oldMaxID+1 {
 		err = errPossibleGap
 	}
-	return tweets, err
+	return prof, tweets, err
 }
 
 // writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
 // If replies is true, the user's replies will also be included.
-func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, replies bool) error {
-	// Try to find the user's name from one of the tweets.
-	author := "@" + user
-	for _, t := range tweets {
-		if t.user == user {
-			author = t.displayName()
-			break
-		}
-	}
-
+func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet, user string, replies bool) error {
+	author := prof.displayName()
 	feedDesc := "Tweets"
 	if replies {
 		feedDesc += " and replies"
@@ -173,7 +167,9 @@ func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, repl
 		Author:      &feeds.Author{Name: author},
 		Updated:     time.Now(),
 		Copyright:   fmt.Sprintf("© %v %v", time.Now().Year(), author),
-		// TODO: Get and set Image field.
+	}
+	if prof.image != "" {
+		feed.Image = &feeds.Image{Url: prof.image}
 	}
 
 	for _, t := range tweets {
@@ -207,6 +203,8 @@ func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, repl
 		// The marshaling here matches feeds.Feed.WriteJSON().
 		jf := (&feeds.JSON{Feed: feed}).JSONFeed()
 		jf.UserComment = fmt.Sprintf("max id %v", maxID)
+		jf.Favicon = prof.icon
+		jf.Icon = prof.image
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		return enc.Encode(jf)
@@ -267,11 +265,12 @@ func debug(ft *fetcher, p string, replies bool) error {
 	}
 	defer f.Close()
 
-	tweets, err := parse(f, ft)
+	prof, tweets, err := parse(f, ft)
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("%+v\n", prof)
 	for _, t := range tweets {
 		if replies || !t.reply() {
 			fmt.Printf("%+v\n", t)

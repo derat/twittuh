@@ -24,6 +24,18 @@ const (
 	defaultHost   = "twitter.com"
 )
 
+// profile contains information about a user.
+type profile struct {
+	name  string // full name
+	user  string // username (without '@')
+	icon  string // small (48x48) favicon URL
+	image string // large (400x400) avatar URL
+}
+
+func (p *profile) displayName() string {
+	return fmt.Sprintf("%s (@%s)", p.name, p.user)
+}
+
 // tweet describes a single tweet.
 type tweet struct {
 	id      int64
@@ -46,80 +58,112 @@ func (t *tweet) reply() bool {
 }
 
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
-func parse(r io.Reader, ft *fetcher) ([]tweet, error) {
+func parse(r io.Reader, ft *fetcher) (profile, []tweet, error) {
 	root, err := html.Parse(r)
 	if err != nil {
-		return nil, err
+		return profile{}, nil, err
 	}
 	p := parser{fetcher: ft}
 	if err := p.proc(root); err != nil {
-		return nil, err
+		return profile{}, nil, err
 	}
-	return p.tweets, nil
+	return p.profile, p.tweets, nil
 }
+
+// section describes the section of the timeline page being parsed.
+type section int
+
+const (
+	unknownSection section = iota
+	profileSection
+	timelineSection
+)
 
 type parser struct {
 	fetcher  *fetcher
-	timeline bool    // true while in timeline div
+	section  section // current section being parsed
+	profile  profile // information about timeline owner
 	curTweet *tweet  // in-progress tweet
 	tweets   []tweet // completed tweets
 }
 
 func (p *parser) proc(n *html.Node) error {
-	switch {
-	case !p.timeline:
-		if isElement(n, "div") && hasClass(n, "timeline") {
-			p.timeline = true
-			defer func() { p.timeline = false }()
+	switch p.section {
+	case unknownSection:
+		if isElement(n, "div") && hasClass(n, "profile") {
+			p.section = profileSection
+			defer func() { p.section = unknownSection }()
+		} else if isElement(n, "div") && hasClass(n, "timeline") {
+			p.section = timelineSection
+			defer func() { p.section = unknownSection }()
 		}
-	case p.curTweet == nil:
-		if isElement(n, "table") && hasClass(n, "tweet") {
-			href, err := rewriteURL(getAttr(n, "href"))
-			if err != nil {
-				return err
+	case profileSection:
+		switch {
+		case isElement(n, "td") && hasClass(n, "avatar"):
+			if imgs := findNodes(n, func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) > 0 {
+				p.profile.icon = getAttr(imgs[0], "src")
+				p.profile.image = strings.Replace(p.profile.icon, "_normal.", "_400x400.", 1)
 			}
-			p.curTweet = &tweet{href: href}
-			defer func() {
-				p.tweets = append(p.tweets, *p.curTweet)
-				p.curTweet = nil
-			}()
+			return nil // skip contents
+		case isElement(n, "div") && hasClass(n, "fullname"):
+			p.profile.name = cleanText(getText(n))
+			return nil // skip contents
+		case isElement(n, "span") && hasClass(n, "screen-name"):
+			p.profile.user = cleanText(getText(n))
+			return nil // skip contents
 		}
-	// In the remaining cases, we're inside a tweet.
-	case isElement(n, "strong") && hasClass(n, "fullname"):
-		p.curTweet.name = cleanText(getText(n))
-		return nil // skip contents
-	case isElement(n, "div") && hasClass(n, "username"):
-		if hasClass(n, "tweet-reply-context") {
-			// The username(s) appear inside <a> elements nested under the div.
-			for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
-				p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
+	case timelineSection:
+		switch {
+		case p.curTweet == nil:
+			if isElement(n, "table") && hasClass(n, "tweet") {
+				href, err := rewriteURL(getAttr(n, "href"))
+				if err != nil {
+					return err
+				}
+				p.curTweet = &tweet{href: href}
+				defer func() {
+					p.tweets = append(p.tweets, *p.curTweet)
+					p.curTweet = nil
+				}()
 			}
-		} else {
-			p.curTweet.user = bareUser(cleanText(getText(n)))
-		}
-		return nil // skip contents
-	case isElement(n, "td") && hasClass(n, "timestamp"):
-		var err error
-		s := strings.TrimSpace(getText(n))
-		if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
-			return fmt.Errorf("bad time %q: %v", s, err)
-		}
-		return nil // skip contents
-	case isElement(n, "div") && hasClass(n, "tweet-text"):
-		var err error
-		if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
-			return fmt.Errorf("failed parsing ID: %v", err)
-		}
-		// Extract a plain-text version of the tweet first.
-		p.curTweet.text = cleanText(getText(n))
+		// In the remaining cases, we're inside a tweet.
+		case isElement(n, "strong") && hasClass(n, "fullname"):
+			p.curTweet.name = cleanText(getText(n))
+			return nil // skip contents
+		case isElement(n, "div") && hasClass(n, "username"):
+			if hasClass(n, "tweet-reply-context") {
+				// The username(s) appear inside <a> elements nested under the div.
+				for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
+					p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
+				}
+			} else {
+				p.curTweet.user = bareUser(cleanText(getText(n)))
+			}
+			return nil // skip contents
+		case isElement(n, "td") && hasClass(n, "timestamp"):
+			var err error
+			s := strings.TrimSpace(getText(n))
+			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
+				return fmt.Errorf("bad time %q: %v", s, err)
+			}
+			return nil // skip contents
+		case isElement(n, "div") && hasClass(n, "tweet-text"):
+			var err error
+			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
+				return fmt.Errorf("failed parsing ID: %v", err)
+			}
+			// Extract a plain-text version of the tweet first.
+			p.curTweet.text = cleanText(getText(n))
 
-		addEmbedded(n, p.fetcher)
-		var b bytes.Buffer
-		if err := html.Render(&b, n); err != nil {
-			return fmt.Errorf("failed rendering text: %v", err)
+			// TODO: Probably ought to rewrite relative links here too.
+			addEmbedded(n, p.fetcher)
+			var b bytes.Buffer
+			if err := html.Render(&b, n); err != nil {
+				return fmt.Errorf("failed rendering text: %v", err)
+			}
+			p.curTweet.content = b.String()
+			return nil // skip contents
 		}
-		p.curTweet.content = b.String()
-		return nil // skip contents
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -128,51 +172,6 @@ func (p *parser) proc(n *html.Node) error {
 		}
 	}
 	return nil
-}
-
-func (p *parser) getImageEmbed(n *html.Node) (string, error) {
-	// Look for a link to the page containing the image.
-	embeds := findNodes(n, func(n *html.Node) bool {
-		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
-	})
-	if len(embeds) == 0 {
-		return "", nil
-	}
-	us := getAttr(embeds[0], "data-url")
-	if us == "" {
-		return "", errors.New("no data-url attribute")
-	}
-	u, err := url.Parse(us)
-	if err != nil {
-		return "", err
-	}
-
-	// Rewrite host to get simple HTML version of image page.
-	if u.Host == "twitter.com" {
-		u.Host = "mobile.twitter.com"
-	}
-	if u.Host != "mobile.twitter.com" || !strings.Contains(u.Path, "/photo/") {
-		return "", nil
-	}
-
-	// Download and parse the image page to look for a <div class="media"> with an <img> inside of it.
-	b, err := p.fetcher.fetch(u.String(), true /* useCache */)
-	if err != nil {
-		return "", err
-	}
-	root, err := html.Parse(bytes.NewReader(b))
-	if err != nil {
-		return "", err
-	}
-	media := findNodes(root, func(n *html.Node) bool { return isElement(n, "div") && hasClass(n, "media") })
-	if len(media) == 0 {
-		return "", nil
-	}
-	imgs := findNodes(media[0], func(n *html.Node) bool { return isElement(n, "img") })
-	if len(imgs) == 0 {
-		return "", nil
-	}
-	return getAttr(imgs[0], "src"), nil
 }
 
 // findNodes returns node within the tree rooted at n for which f returns true.
