@@ -351,7 +351,19 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 		})
 	}
 
-	// TODO: Rewrite relative links.
+	// Rewrite any relative links to be absolute.
+	for _, link := range findNodes(n, matchFunc("a", "")) {
+		for i, a := range link.Attr {
+			if a.Key == "href" {
+				if url, err := url.Parse(a.Val); err == nil || url.Host == "" {
+					url.Scheme = defaultScheme
+					url.Host = defaultHost
+					debugf("Rewrote link %v to %s", a.Val, url)
+					link.Attr[i].Val = url.String()
+				}
+			}
+		}
+	}
 }
 
 // getImageURL attempts to extract the underlying URL to the image from the supplied photo
