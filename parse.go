@@ -89,42 +89,44 @@ func (p *parser) proc(n *html.Node) error {
 				p.curTweet = nil
 			}()
 		}
-	default:
-		switch {
-		case isElement(n, "strong") && hasClass(n, "fullname"):
-			p.curTweet.name = cleanText(getText(n))
-		case isElement(n, "div") && hasClass(n, "username"):
-			if hasClass(n, "tweet-reply-context") {
-				// The username(s) appear inside <a> elements nested under the div.
-				for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
-					p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
-				}
-			} else {
-				p.curTweet.user = bareUser(cleanText(getText(n)))
+	// In the remaining cases, we're inside a tweet.
+	case isElement(n, "strong") && hasClass(n, "fullname"):
+		p.curTweet.name = cleanText(getText(n))
+		return nil // skip contents
+	case isElement(n, "div") && hasClass(n, "username"):
+		if hasClass(n, "tweet-reply-context") {
+			// The username(s) appear inside <a> elements nested under the div.
+			for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
+				p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
 			}
-		case isElement(n, "td") && hasClass(n, "timestamp"):
-			var err error
-			s := strings.TrimSpace(getText(n))
-			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
-				return fmt.Errorf("bad time %q: %v", s, err)
-			}
-		case isElement(n, "div") && hasClass(n, "tweet-text"):
-			var err error
-			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
-				return fmt.Errorf("failed parsing ID: %v", err)
-			}
-			var b bytes.Buffer
-			if err := html.Render(&b, n); err != nil {
-				return fmt.Errorf("failed rendering text: %v", err)
-			}
-			p.curTweet.content = b.String()
-			p.curTweet.text = cleanText(getText(n))
-			if p.curTweet.imageURL, err = p.getImageEmbed(n); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: couldn't get image from %v: %v\n", p.curTweet.href, err)
-			} else if p.curTweet.imageURL != "" {
-				p.curTweet.imageType = guessContentType(p.curTweet.imageURL)
-			}
+		} else {
+			p.curTweet.user = bareUser(cleanText(getText(n)))
 		}
+		return nil // skip contents
+	case isElement(n, "td") && hasClass(n, "timestamp"):
+		var err error
+		s := strings.TrimSpace(getText(n))
+		if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
+			return fmt.Errorf("bad time %q: %v", s, err)
+		}
+		return nil // skip contents
+	case isElement(n, "div") && hasClass(n, "tweet-text"):
+		var err error
+		if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
+			return fmt.Errorf("failed parsing ID: %v", err)
+		}
+		var b bytes.Buffer
+		if err := html.Render(&b, n); err != nil {
+			return fmt.Errorf("failed rendering text: %v", err)
+		}
+		p.curTweet.content = b.String()
+		p.curTweet.text = cleanText(getText(n))
+		if p.curTweet.imageURL, err = p.getImageEmbed(n); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: couldn't get image from %v: %v\n", p.curTweet.href, err)
+		} else if p.curTweet.imageURL != "" {
+			p.curTweet.imageType = guessContentType(p.curTweet.imageURL)
+		}
+		return nil // skip contents
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

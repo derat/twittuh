@@ -173,6 +173,7 @@ func writeFeed(w io.Writer, format feedFormat, tweets []tweet, user string, repl
 		Author:      &feeds.Author{Name: author},
 		Updated:     time.Now(),
 		Copyright:   fmt.Sprintf("© %v %v", time.Now().Year(), author),
+		// TODO: Get and set Image field.
 	}
 
 	for _, t := range tweets {
