@@ -23,6 +23,7 @@ import (
 const (
 	defaultScheme = "https"
 	defaultHost   = "twitter.com"
+	mobileHost    = "mobile.twitter.com"
 )
 
 // profile contains information about a user.
@@ -100,23 +101,23 @@ func (p *parser) proc(n *html.Node) error {
 		}
 	case profileSection:
 		switch {
-		case isElement(n, "td") && hasClass(n, "avatar"):
+		case matchFunc("td", "avatar")(n):
 			if imgs := findNodes(n, func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) > 0 {
 				p.profile.icon = getAttr(imgs[0], "src")
 				p.profile.image = strings.Replace(p.profile.icon, "_normal.", "_400x400.", 1)
 			}
 			return nil // skip contents
-		case isElement(n, "div") && hasClass(n, "fullname"):
+		case matchFunc("div", "fullname")(n):
 			p.profile.name = cleanText(getText(n))
 			return nil // skip contents
-		case isElement(n, "span") && hasClass(n, "screen-name"):
+		case matchFunc("span", "screen-name")(n):
 			p.profile.user = cleanText(getText(n))
 			return nil // skip contents
 		}
 	case timelineSection:
 		switch {
 		case p.curTweet == nil:
-			if isElement(n, "table") && hasClass(n, "tweet") {
+			if matchFunc("table", "tweet")(n) {
 				href, err := rewriteURL(getAttr(n, "href"))
 				if err != nil {
 					return err
@@ -128,10 +129,10 @@ func (p *parser) proc(n *html.Node) error {
 				}()
 			}
 		// In the remaining cases, we're inside a tweet.
-		case isElement(n, "strong") && hasClass(n, "fullname"):
+		case matchFunc("strong", "fullname")(n):
 			p.curTweet.name = cleanText(getText(n))
 			return nil // skip contents
-		case isElement(n, "div") && hasClass(n, "username"):
+		case matchFunc("div", "username")(n):
 			if hasClass(n, "tweet-reply-context") {
 				// The username(s) appear inside <a> elements nested under the div.
 				for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
@@ -141,14 +142,14 @@ func (p *parser) proc(n *html.Node) error {
 				p.curTweet.user = bareUser(cleanText(getText(n)))
 			}
 			return nil // skip contents
-		case isElement(n, "td") && hasClass(n, "timestamp"):
+		case matchFunc("td", "timestamp")(n):
 			var err error
 			s := strings.TrimSpace(getText(n))
 			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
 				return fmt.Errorf("bad time %q: %v", s, err)
 			}
 			return nil // skip contents
-		case isElement(n, "div") && hasClass(n, "tweet-text"):
+		case matchFunc("div", "tweet-text")(n):
 			var err error
 			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
 				return fmt.Errorf("failed parsing ID: %v", err)
@@ -156,8 +157,7 @@ func (p *parser) proc(n *html.Node) error {
 			// Extract a plain-text version of the tweet first.
 			p.curTweet.text = cleanText(getText(n))
 
-			// TODO: Probably ought to rewrite relative links here too.
-			addEmbedded(n, p.fetcher)
+			addEmbeddedContent(n, p.fetcher)
 			var b bytes.Buffer
 			if err := html.Render(&b, n); err != nil {
 				return fmt.Errorf("failed rendering text: %v", err)
@@ -186,6 +186,21 @@ func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 		ns = append(ns, findNodes(c, f)...)
 	}
 	return ns
+}
+
+// matchFunc is a convenient shorthand that returns a function that can be passed to findNodes.
+// If tag is non-empty, only HTML elements with the given tag are matched.
+// If class is non-empty, only nodes with the supplied CSS class are matched.
+func matchFunc(tag, class string) func(n *html.Node) bool {
+	return func(n *html.Node) bool {
+		if tag != "" && !isElement(n, tag) {
+			return false
+		}
+		if class != "" && !hasClass(n, class) {
+			return false
+		}
+		return true
+	}
 }
 
 // isElement returns true if n is an HTML element with the supplied tag type.
@@ -287,8 +302,8 @@ func rewriteURL(s string) (string, error) {
 	return u.String(), nil
 }
 
-// addEmbedded adds embedded content that's linked within n.
-func addEmbedded(n *html.Node, ft *fetcher) {
+// addEmbeddedContent adds embedded content that's linked within n.
+func addEmbeddedContent(n *html.Node, ft *fetcher) {
 	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
 	for _, link := range findNodes(n, func(n *html.Node) bool {
 		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
@@ -296,11 +311,12 @@ func addEmbedded(n *html.Node, ft *fetcher) {
 		url, err := getImageURL(getAttr(link, "data-url"), ft)
 		if url == "" || err != nil {
 			if err != nil {
-				log.Print("Got error while looking for image URL: ", err)
+				log.Print("Couldn't get image URL: ", err)
 			}
 			continue
 		}
 		// Replace the link's children (formerly the photo page URL) with an <img> tag.
+		debug("Adding embedded image ", url)
 		for link.LastChild != nil {
 			link.RemoveChild(link.LastChild)
 		}
@@ -314,37 +330,82 @@ func addEmbedded(n *html.Node, ft *fetcher) {
 		link.Attr = append(link.Attr, html.Attribute{Key: "style", Val: "display:block"})
 	}
 
-	// TODO: Also handle embedded tweets.
+	// Look for embedded tweets: <a data-expanded-url="https://twitter.com/someuser/status/...">.
+	for _, link := range findNodes(n, func(n *html.Node) bool {
+		return isElement(n, "a") && getAttr(n, "data-expanded-url") != ""
+	}) {
+		url := getAttr(link, "data-url")
+		content, err := getTweetContent(url, ft)
+		if content == nil || err != nil {
+			if err != nil {
+				log.Print("Couldn't fetch tweet content: ", err)
+			}
+			continue
+		}
+		// Append the content inside the link with styling similar to what Twitter uses.
+		debug("Adding embedded tweet ", url)
+		link.AppendChild(content)
+		link.Attr = append(link.Attr, html.Attribute{
+			Key: "style",
+			Val: "border:solid 1px #ccd6dd; border-radius:15px; display:block; margin:10px; padding:10px",
+		})
+	}
+
+	// TODO: Rewrite relative links.
 }
 
 // getImageURL attempts to extract the underlying URL to the image from the supplied photo
 // page URL, e.g. "https://twitter.com/biff_tannen/status/12813232543132445323/photo/1".
 // If the URL is not a photo page, an empty string is returned.
-func getImageURL(u string, ft *fetcher) (string, error) {
-	// Check if we got a photo page URL.
-	url, err := url.Parse(u)
-	if err != nil {
+func getImageURL(url string, ft *fetcher) (string, error) {
+	// Check if we got a photo page URL. Then download and parse the image page
+	// to look for a <div class="media"> with an <img> inside of it.
+	if url = getMobileURL(url); !strings.Contains(url, "/photo/") {
 		return "", nil
-	}
-	if url.Host == "twitter.com" {
-		url.Host = "mobile.twitter.com" // get simple HTML page
-	} else if url.Host != "mobile.twitter.com" {
-		return "", nil
-	}
-	if !strings.Contains(url.Path, "/photo/") {
-		return "", nil
-	}
-
-	// Download and parse the image page to look for a <div class="media"> with an <img> inside of it.
-	if b, err := ft.fetch(url.String(), true /* useCache */); err != nil {
-		return "", fmt.Errorf("couldn't fetch %s: %v", url, err)
+	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
+		return "", fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
-		return "", fmt.Errorf("couldn't parse %s: %v", url, err)
-	} else if media := findNodes(root, func(n *html.Node) bool { return isElement(n, "div") && hasClass(n, "media") }); len(media) == 0 {
-		return "", fmt.Errorf("didn't find media div in %s", url)
-	} else if imgs := findNodes(media[0], func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) == 0 {
-		return "", fmt.Errorf("didn't find image in %s", url)
+		return "", fmt.Errorf("couldn't parse %v: %v", url, err)
+	} else if media := findNodes(root, matchFunc("div", "media")); len(media) == 0 {
+		return "", fmt.Errorf("didn't find media div in %v", url)
+	} else if imgs := findNodes(media[0], matchFunc("img", "")); len(imgs) == 0 {
+		return "", fmt.Errorf("didn't find image in %v", url)
 	} else {
 		return getAttr(imgs[0], "src"), nil
 	}
+}
+
+// getTweetContent attempts to extract the main content from the supplied tweet URL,
+// e.g. "https://twitter.com/biff_tannen/status/12813232543132445323". If the URL is
+// not a tweet page, nil is returned.
+func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
+	if url = getMobileURL(url); !strings.Contains(url, "/status/") {
+		return nil, nil
+	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
+		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
+	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
+		return nil, fmt.Errorf("couldn't parse %v: %v", url, err)
+	} else if divs := findNodes(root, matchFunc("div", "tweet-text")); len(divs) == 0 {
+		return nil, fmt.Errorf("didn't find content in %v", url)
+	} else {
+		div := divs[0]
+		div.Parent.RemoveChild(div) // need to remove before adding to different tree
+		return div, nil
+	}
+}
+
+// getMobileURL rewrites u to be a mobile.twitter.com URL (needed for getting a basic HTML page)
+// if it isn't one already. If u isn't a twitter.com URL, returns an empty string.
+func getMobileURL(u string) string {
+	url, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+	if url.Host == defaultHost {
+		url.Host = mobileHost
+	}
+	if url.Host != mobileHost {
+		return ""
+	}
+	return url.String()
 }
