@@ -327,7 +327,10 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 			Attr:     []html.Attribute{html.Attribute{Key: "src", Val: url}},
 		})
 		// Make sure the link isn't displayed inline.
-		link.Attr = append(link.Attr, html.Attribute{Key: "style", Val: "display:block"})
+		link.Attr = append(link.Attr, html.Attribute{
+			Key: "style",
+			Val: "display:block; margin:10px",
+		})
 	}
 
 	// Look for embedded tweets: <a data-expanded-url="https://twitter.com/someuser/status/...">.
