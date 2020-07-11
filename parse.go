@@ -28,8 +28,8 @@ const (
 
 // profile contains information about a user.
 type profile struct {
-	name  string // full name
 	user  string // username (without '@')
+	name  string // full name
 	icon  string // small (48x48) favicon URL
 	image string // large (400x400) avatar URL
 }
@@ -42,8 +42,8 @@ func (p *profile) displayName() string {
 type tweet struct {
 	id      int64
 	href    string    // absolute URL to tweet
-	name    string    // full name
 	user    string    // username (without '@')
+	name    string    // full name
 	time    time.Time // approximate (Twitter just gives us age)
 	content string    // HTML content
 	text    string    // text from content
@@ -158,6 +158,10 @@ func (p *parser) proc(n *html.Node) error {
 			p.curTweet.text = cleanText(getText(n))
 
 			addEmbeddedContent(n, p.fetcher)
+			if p.curTweet.user != p.profile.user {
+				prependUserLink(n, p.curTweet.user, p.curTweet.displayName())
+			}
+			rewriteRelativeLinks(n)
 			var b bytes.Buffer
 			if err := html.Render(&b, n); err != nil {
 				return fmt.Errorf("failed rendering text: %v", err)
@@ -353,20 +357,6 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 			Val: "border:solid 1px #ccd6dd; border-radius:15px; display:block; margin:10px; padding:10px",
 		})
 	}
-
-	// Rewrite any relative links to be absolute.
-	for _, link := range findNodes(n, matchFunc("a", "")) {
-		for i, a := range link.Attr {
-			if a.Key == "href" {
-				if url, err := url.Parse(a.Val); err == nil || url.Host == "" {
-					url.Scheme = defaultScheme
-					url.Host = defaultHost
-					debugf("Rewrote link %v to %s", a.Val, url)
-					link.Attr[i].Val = url.String()
-				}
-			}
-		}
-	}
 }
 
 // getImageURL attempts to extract the underlying URL to the image from the supplied photo
@@ -406,6 +396,38 @@ func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
 		div := divs[0]
 		div.Parent.RemoveChild(div) // need to remove before adding to different tree
 		return div, nil
+	}
+}
+
+// prependUserLink prepends a link to the supplied user within n.
+// This is useful for attributing retweets.
+func prependUserLink(n *html.Node, user, displayName string) {
+	link := &html.Node{
+		Type:     html.ElementNode,
+		DataAtom: atom.A,
+		Data:     "a",
+		Attr: []html.Attribute{
+			html.Attribute{Key: "href", Val: fmt.Sprintf("%v://%v/%v", defaultScheme, defaultHost, user)},
+			html.Attribute{Key: "style", Val: "display:block; font-weight:bold"},
+		},
+	}
+	link.AppendChild(&html.Node{Type: html.TextNode, Data: displayName})
+	n.InsertBefore(link, n.FirstChild)
+}
+
+// rewriteRelativeLinks rewrites all relative links in n to be absolute.
+func rewriteRelativeLinks(n *html.Node) {
+	for _, link := range findNodes(n, matchFunc("a", "")) {
+		for i, a := range link.Attr {
+			if a.Key == "href" {
+				if url, err := url.Parse(a.Val); err == nil || url.Host == "" {
+					url.Scheme = defaultScheme
+					url.Host = defaultHost
+					debugf("Rewrote link %v to %s", a.Val, url)
+					link.Attr[i].Val = url.String()
+				}
+			}
+		}
 	}
 }
 
