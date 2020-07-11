@@ -421,7 +421,7 @@ func rewriteRelativeLinks(n *html.Node) {
 	for _, link := range findNodes(n, matchFunc("a", "")) {
 		for i, a := range link.Attr {
 			if a.Key == "href" {
-				if url, err := url.Parse(a.Val); err == nil || url.Host == "" {
+				if url, err := url.Parse(a.Val); err == nil && url.Host == "" {
 					url.Scheme = defaultScheme
 					url.Host = defaultHost
 					debugf("Rewrote link %v to %s", a.Val, url)
