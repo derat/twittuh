@@ -47,9 +47,10 @@ func main() {
 	}
 	cacheDir := flag.String("cache-dir", filepath.Join(os.Getenv("HOME"), ".cache/twittuh"), "Directory for caching downloads")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
+	embeds := flag.Bool("embeds", true, "Rewrite tweets to include embedded images and tweets")
 	force := flag.Bool("force", false, "Download and write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
-	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
+	pages := flag.Int("pages", 3, "Timeline pages to request (20 tweets/replies per page)")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
@@ -60,7 +61,7 @@ func main() {
 	}
 
 	if *debugFile != "" {
-		if err := debugParse(ft, *debugFile, *replies); err != nil {
+		if err := debugParse(ft, *debugFile, *replies, *embeds); err != nil {
 			log.Fatal("Failed reading timeline: ", err)
 		}
 		os.Exit(0)
@@ -82,7 +83,7 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old max ID %v", user, oldMaxID)
-	prof, tweets, err := getTimeline(ft, user, oldMaxID, *maxRequests)
+	prof, tweets, err := getTimeline(ft, user, oldMaxID, *pages, *embeds)
 	if err == errUnchanged {
 		debug("No new tweets; exiting without writing feed")
 		os.Exit(0)
@@ -117,7 +118,8 @@ var (
 )
 
 // getTweets downloads and returns tweets from the supplied user's timeline.
-// At most maxRequests will be issued to Twitter.
+// The specified number of pages are downloaded. Each page appears to include
+// 20 tweets (or replies).
 //
 // If the ID of the latest tweet matches oldMaxID, errUnchanged is returned
 // alongside an empty slice. This indicates that no new Tweets are present.
@@ -125,26 +127,27 @@ var (
 // If there is a possible gap between the tweets returned by the last invocation
 // and the tweets returned by this invocation, errPossibleGap is returned
 // alongside all the tweet that were fetched.
-func getTimeline(ft *fetcher, user string, oldMaxID int64, maxRequests int) (profile, []tweet, error) {
+func getTimeline(ft *fetcher, user string, oldMaxID int64, pages int,
+	embeds bool) (profile, []tweet, error) {
 	var prof profile
 	var tweets []tweet
 
 	baseURL := baseFetchURL + user
 	url := baseURL
-	for nr := 0; nr < maxRequests; nr++ {
+	for np := 0; np < pages; np++ {
 		b, err := ft.fetch(url, false /* useCache */)
 		if err != nil {
 			return prof, tweets, err
 		}
 		var newTweets []tweet
-		if prof, newTweets, err = parse(bytes.NewReader(b), ft); err != nil {
+		if prof, newTweets, err = parse(bytes.NewReader(b), ft, embeds); err != nil {
 			return prof, tweets, err
 		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
 			return prof, tweets, nil
 		}
 
 		// Bail out early if there are no new tweets.
-		if len(tweets) == 0 && newTweets[0].id == oldMaxID {
+		if np == 0 && newTweets[0].id == oldMaxID {
 			return prof, nil, errUnchanged
 		}
 
@@ -271,14 +274,14 @@ func getMaxID(p string, format feedFormat) (int64, error) {
 }
 
 // debugParse reads an HTML timeline from p and dumps its tweets to stdout.
-func debugParse(ft *fetcher, p string, replies bool) error {
+func debugParse(ft *fetcher, p string, replies, embeds bool) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	prof, tweets, err := parse(f, ft)
+	prof, tweets, err := parse(f, ft, embeds)
 	if err != nil {
 		return err
 	}

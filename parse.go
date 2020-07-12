@@ -60,12 +60,12 @@ func (t *tweet) reply() bool {
 }
 
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
-func parse(r io.Reader, ft *fetcher) (profile, []tweet, error) {
+func parse(r io.Reader, ft *fetcher, embeds bool) (profile, []tweet, error) {
 	root, err := html.Parse(r)
 	if err != nil {
 		return profile{}, nil, err
 	}
-	p := parser{fetcher: ft}
+	p := parser{fetcher: ft, embeds: embeds}
 	if err := p.proc(root); err != nil {
 		return profile{}, nil, err
 	}
@@ -83,6 +83,7 @@ const (
 
 type parser struct {
 	fetcher  *fetcher
+	embeds   bool    // insert embedded images and tweets
 	section  section // current section being parsed
 	profile  profile // information about timeline owner
 	curTweet *tweet  // in-progress tweet
@@ -157,7 +158,9 @@ func (p *parser) proc(n *html.Node) error {
 			// Extract a plain-text version of the tweet first.
 			p.curTweet.text = cleanText(getText(n))
 
-			addEmbeddedContent(n, p.fetcher)
+			if p.embeds {
+				addEmbeddedContent(n, p.fetcher)
+			}
 			if p.curTweet.user != p.profile.user {
 				prependUserLink(n, p.curTweet.user, p.curTweet.displayName())
 			}
