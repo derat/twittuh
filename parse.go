@@ -320,13 +320,21 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 			}
 			continue
 		}
-		// Insert the content after the link with styling similar to what Twitter uses.
+
 		debug("Adding embedded tweet ", url)
-		content.Attr = append(content.Attr, html.Attribute{
-			Key: "style",
-			Val: "border:solid 1px #ccd6dd; border-radius:15px; margin:10px; padding:10px",
-		})
-		link.Parent.InsertBefore(content, link.NextSibling)
+
+		// Insert an <hr> before the link to separate the tweet from the preceding content.
+		parent := link.Parent
+		parent.InsertBefore(&html.Node{Type: html.ElementNode, DataAtom: atom.Hr, Data: "hr"}, link)
+
+		// Nest the link under a <strong> tag to set it off from the preceding content.
+		strong := &html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"}
+		parent.InsertBefore(strong, link)
+		parent.RemoveChild(link)
+		strong.AppendChild(link)
+
+		// Insert the content after the <strong> tag.
+		parent.InsertBefore(content, strong.NextSibling)
 	}
 
 	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
@@ -351,11 +359,6 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 			DataAtom: atom.Img,
 			Data:     "img",
 			Attr:     []html.Attribute{html.Attribute{Key: "src", Val: url}},
-		})
-		// Make sure the link isn't displayed inline.
-		link.Attr = append(link.Attr, html.Attribute{
-			Key: "style",
-			Val: "display:block; margin:10px",
 		})
 	}
 }
@@ -409,11 +412,14 @@ func prependUserLink(n *html.Node, user, displayName string) {
 		Data:     "a",
 		Attr: []html.Attribute{
 			html.Attribute{Key: "href", Val: fmt.Sprintf("%v://%v/%v", defaultScheme, defaultHost, user)},
-			html.Attribute{Key: "style", Val: "display:block; font-weight:bold"},
 		},
 	}
 	link.AppendChild(&html.Node{Type: html.TextNode, Data: displayName})
-	n.InsertBefore(link, n.FirstChild)
+
+	strong := &html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"}
+	strong.AppendChild(link)
+
+	n.InsertBefore(strong, n.FirstChild)
 }
 
 // rewriteRelativeLinks rewrites all relative links in n to be absolute.
