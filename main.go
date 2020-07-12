@@ -107,6 +107,11 @@ func main() {
 	if err := f.Close(); err != nil {
 		log.Fatal("Failed closing feed file: ", err)
 	}
+	if fi, err := os.Stat(feedPath); err == nil {
+		if err := os.Chmod(f.Name(), fi.Mode()); err != nil {
+			log.Print("Failed setting mode: ", err)
+		}
+	}
 	if err := os.Rename(f.Name(), feedPath); err != nil {
 		log.Fatal("Failed replacing feed file: ", err)
 	}
