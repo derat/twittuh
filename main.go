@@ -40,14 +40,14 @@ var verbose = false // enable verbose logging
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <USER> <FILE>\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <user> <file>\n", os.Args[0])
 		fmt.Fprintln(flag.CommandLine.Output(), "Creates an RSS feed from a Twitter user's timeline.")
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
 	cacheDir := flag.String("cache-dir", filepath.Join(os.Getenv("HOME"), ".cache/twittuh"), "Directory for caching downloads")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
-	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
+	force := flag.Bool("force", false, "Download and write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	maxRequests := flag.Int("max-requests", 3, "Maximum number of HTTP requests to make to Twitter")
 	replies := flag.Bool("replies", false, "Include the user's replies")
@@ -92,16 +92,22 @@ func main() {
 		log.Fatalf("Failed getting tweets for %v: %v", user, err)
 	}
 
-	f, err := os.Create(feedPath)
+	// Write to a temp file and then replace the feed atomically to preserve the old version if
+	// something goes wrong.
+	f, err := ioutil.TempFile(filepath.Dir(feedPath), "."+filepath.Base(feedPath)+".")
 	if err != nil {
 		log.Fatal("Failed creating feed file: ", err)
 	}
+	defer os.Remove(f.Name()) // fails if we successfully rename temp file
 	if err := writeFeed(f, format, prof, tweets, user, *replies); err != nil {
 		f.Close()
 		log.Fatal("Failed writing feed: ", err)
 	}
 	if err := f.Close(); err != nil {
 		log.Fatal("Failed closing feed file: ", err)
+	}
+	if err := os.Rename(f.Name(), feedPath); err != nil {
+		log.Fatal("Failed replacing feed file: ", err)
 	}
 }
 
