@@ -88,7 +88,7 @@ func main() {
 		debug("No new tweets; exiting without writing feed")
 		os.Exit(0)
 	} else if err == errPossibleGap {
-		log.Print("Possible gap in tweets (run more frequently or increase -max-requests)")
+		log.Print("Possible gap in tweets (run more frequently or increase -pages)")
 	} else if err != nil {
 		log.Fatalf("Failed getting tweets for %v: %v", user, err)
 	}
