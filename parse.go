@@ -159,7 +159,9 @@ func (p *parser) proc(n *html.Node) error {
 			p.curTweet.text = cleanText(getText(n))
 
 			if p.embeds {
-				addEmbeddedContent(n, p.fetcher)
+				// Insert images after tweets so we can insert the tweets' images too.
+				addEmbeddedTweets(n, p.fetcher)
+				addEmbeddedImages(n, p.fetcher)
 			}
 			if p.curTweet.user != p.profile.user {
 				prependUserLink(n, p.curTweet.user, p.curTweet.displayName())
@@ -320,9 +322,9 @@ func rewriteURL(s string) (string, error) {
 	return u.String(), nil
 }
 
-// addEmbeddedContent adds embedded content that's linked within n.
-func addEmbeddedContent(n *html.Node, ft *fetcher) {
-	// Look for embedded tweets: <a data-expanded-url="https://twitter.com/someuser/status/...">.
+// addEmbeddedContent inserts the content of tweets that are embedded within n.
+// Embeds appear as <a data-expanded-url="https://twitter.com/someuser/status/...">.
+func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 	for _, link := range findNodes(n, func(n *html.Node) bool {
 		return isElement(n, "a") && getAttr(n, "data-expanded-url") != ""
 	}) {
@@ -350,9 +352,12 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 		pg.LastChild.AppendChild(link)
 		pg.AppendChild(content)
 	}
+}
 
-	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
-	// We do this after embedding tweets so we can insert their images too.
+// addEmbeddedImages inserts <img> elemnts for images that are embedded within n.
+// Links to "/photo/" URLs appear as <a data-pre-embedded="true" data-url="...">.
+// Photo pages need to be fetched to get the actual image URLs.
+func addEmbeddedImages(n *html.Node, ft *fetcher) {
 	for _, link := range findNodes(n, func(n *html.Node) bool {
 		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
 	}) {
