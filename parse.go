@@ -257,11 +257,13 @@ func cleanText(s string) string {
 	return s
 }
 
-// TODO: I'm not sure that seconds or days are used.
-var durationRegexp = regexp.MustCompile(`^(\d+)([smhd])$`)
+var durationRegexp = regexp.MustCompile(`^(\d+)([smh])$`)
 
 // parseTime parses a Twitter-supplied "timestamp".
-// These can take a bunch of forms, e.g. "23m", "2h", "Jul 9", etc.
+// These can take a variety of forms:
+//   - "23m" or "2h" if within the last 24 hours
+//   - "Jul 9" if within the last year
+//   - "25 Jun 19" if more than a year old (i.e. day-of-month first)
 func parseTime(s string, now time.Time) (time.Time, error) {
 	if ms := durationRegexp.FindStringSubmatch(s); ms != nil {
 		quant, err := strconv.Atoi(ms[1])
@@ -270,21 +272,30 @@ func parseTime(s string, now time.Time) (time.Time, error) {
 		}
 		var units time.Duration
 		switch ms[2] {
-		case "s":
+		case "s": // not sure if actually used
 			units = time.Second
 		case "m":
 			units = time.Minute
 		case "h":
 			units = time.Hour
-		case "d":
-			units = 24 * time.Hour // busted for DST, but what can you do
 		default:
 			return time.Time{}, errors.New("bad units") // shouldn't happen
 		}
 		return now.Add(-1 * time.Duration(quant) * units), nil
 	}
 
+	// Twitter doesn't supply the time or time zone for dates. Use noon GMT to make
+	// it likely that we'll at least get the correct day irrespective of time zone.
 	if t, err := time.Parse("Jan 2", s); err == nil {
+		year := now.Year()
+		if t.Month() > now.Month() || (t.Month() == now.Month() && t.Day() > now.Day()) {
+			year--
+		}
+		t, _ = time.Parse("Jan 2 2006 15:00", s+fmt.Sprintf(" %04d 12:00", year))
+		return t, nil
+	}
+
+	if t, err := time.Parse("2 Jan 06 15:00", s+" 12:00"); err == nil {
 		return t, nil
 	}
 
