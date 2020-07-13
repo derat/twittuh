@@ -326,18 +326,18 @@ func addEmbeddedContent(n *html.Node, ft *fetcher) {
 
 		debug("Adding embedded tweet ", url)
 
-		// Insert an <hr> before the link to separate the tweet from the preceding content.
+		// Insert a <p> before the link.
 		parent := link.Parent
-		parent.InsertBefore(&html.Node{Type: html.ElementNode, DataAtom: atom.Hr, Data: "hr"}, link)
+		pg := &html.Node{Type: html.ElementNode, DataAtom: atom.P, Data: "p"}
+		parent.InsertBefore(pg, link)
 
-		// Nest the link under a <strong> tag to set it off from the preceding content.
-		strong := &html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"}
-		parent.InsertBefore(strong, link)
-		parent.RemoveChild(link)
-		strong.AppendChild(link)
-
-		// Insert the content after the <strong> tag.
-		parent.InsertBefore(content, strong.NextSibling)
+		// Within the <p>, add an <hr>, a <strong> containing the link, and the content <div>.
+		// Sadly, <hr> elements don't seem to be displayed by the Feedly Android app.
+		pg.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Hr, Data: "hr"})
+		pg.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"})
+		parent.RemoveChild(link) // remove before reparenting under <strong>
+		pg.LastChild.AppendChild(link)
+		pg.AppendChild(content)
 	}
 
 	// Look for links to image pages: <a data-pre-embedded="true" data-url="...">.
