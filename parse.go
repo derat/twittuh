@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,12 +17,6 @@ import (
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
-)
-
-const (
-	defaultScheme = "https"
-	defaultHost   = "twitter.com"
-	mobileHost    = "mobile.twitter.com"
 )
 
 // profile contains information about a user.
@@ -119,11 +112,8 @@ func (p *parser) proc(n *html.Node) error {
 		switch {
 		case p.curTweet == nil:
 			if matchFunc("table", "tweet")(n) {
-				href, err := rewriteURL(getAttr(n, "href"))
-				if err != nil {
-					return err
-				}
-				p.curTweet = &tweet{href: href}
+				p.curTweet = &tweet{href: absoluteURL(getAttr(n, "href"))}
+				// TODO: Check
 				defer func() {
 					p.tweets = append(p.tweets, *p.curTweet)
 					p.curTweet = nil
@@ -184,81 +174,6 @@ func (p *parser) proc(n *html.Node) error {
 	return nil
 }
 
-// findNodes returns node within the tree rooted at n for which f returns true.
-func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
-	var ns []*html.Node
-
-	if f(n) {
-		ns = append(ns, n)
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		ns = append(ns, findNodes(c, f)...)
-	}
-	return ns
-}
-
-// matchFunc is a convenient shorthand that returns a function that can be passed to findNodes.
-// If tag is non-empty, only HTML elements with the given tag are matched.
-// If class is non-empty, only nodes with the supplied CSS class are matched.
-func matchFunc(tag, class string) func(n *html.Node) bool {
-	return func(n *html.Node) bool {
-		if tag != "" && !isElement(n, tag) {
-			return false
-		}
-		if class != "" && !hasClass(n, class) {
-			return false
-		}
-		return true
-	}
-}
-
-// isElement returns true if n is an HTML element with the supplied tag type.
-func isElement(n *html.Node, tag string) bool {
-	return n.Type == html.ElementNode && n.Data == tag
-}
-
-// hasClass returns true if n's "class" attribute contains class.
-func hasClass(n *html.Node, class string) bool {
-	for _, v := range strings.Fields(getAttr(n, "class")) {
-		if v == class {
-			return true
-		}
-	}
-	return false
-}
-
-// getAttr returns the first occurrence of the named attribute from n.
-// An empty string is returned if the attribute isn't present.
-func getAttr(n *html.Node, attr string) string {
-	for _, a := range n.Attr {
-		if a.Key == attr {
-			return a.Val
-		}
-	}
-	return ""
-}
-
-// getText concatenates all text content in and under n.
-func getText(n *html.Node) string {
-	var text string
-	if n.Type == html.TextNode {
-		text += n.Data
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		text += getText(c)
-	}
-	return text
-}
-
-var spaceRegexp = regexp.MustCompile(`\s+`)
-
-// cleanText trims whitespace from the beginning and end of s and condenses repeated whitespace.
-func cleanText(s string) string {
-	s = strings.TrimSpace(s)
-	s = spaceRegexp.ReplaceAllString(s, " ")
-	return s
-}
-
 var durationRegexp = regexp.MustCompile(`^(\d+)([smh])$`)
 
 // parseTime parses a Twitter-supplied "timestamp".
@@ -302,24 +217,6 @@ func parseTime(s string, now time.Time) (time.Time, error) {
 	}
 
 	return time.Time{}, errors.New("unknown format")
-}
-
-// rewriteURL rewrites s to be an absolute URL served by Twitter.
-// If s is already absolute, it is returned unchanged.
-func rewriteURL(s string) (string, error) {
-	if s == "" {
-		return "", errors.New("empty URL")
-	}
-	u, err := url.Parse(s)
-	if err != nil {
-		return "", err
-	}
-	if u.IsAbs() {
-		return s, nil
-	}
-	u.Scheme = defaultScheme
-	u.Host = defaultHost
-	return u.String(), nil
 }
 
 // addEmbeddedContent inserts the content of tweets that are embedded within n.
@@ -390,7 +287,7 @@ func addEmbeddedImages(n *html.Node, ft *fetcher) {
 func getImageURL(url string, ft *fetcher) (string, error) {
 	// Check if we got a photo page URL. Then download and parse the image page
 	// to look for a <div class="media"> with an <img> inside of it.
-	if url = getMobileURL(url); !strings.Contains(url, "/photo/") {
+	if url = mobileURL(url); !strings.Contains(url, "/photo/") {
 		return "", nil
 	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
 		return "", fmt.Errorf("couldn't fetch %v: %v", url, err)
@@ -409,7 +306,7 @@ func getImageURL(url string, ft *fetcher) (string, error) {
 // e.g. "https://twitter.com/biff_tannen/status/12813232543132445323". If the URL is
 // not a tweet page, nil is returned.
 func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
-	if url = getMobileURL(url); !strings.Contains(url, "/status/") {
+	if url = mobileURL(url); !strings.Contains(url, "/status/") {
 		return nil, nil
 	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
 		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
@@ -467,9 +364,7 @@ func prependUserLink(n *html.Node, user, displayName string) {
 		Type:     html.ElementNode,
 		DataAtom: atom.A,
 		Data:     "a",
-		Attr: []html.Attribute{
-			html.Attribute{Key: "href", Val: fmt.Sprintf("%v://%v/%v", defaultScheme, defaultHost, user)},
-		},
+		Attr:     []html.Attribute{html.Attribute{Key: "href", Val: userURL(user)}},
 	}
 	link.AppendChild(&html.Node{Type: html.TextNode, Data: displayName})
 
@@ -484,29 +379,8 @@ func rewriteRelativeLinks(n *html.Node) {
 	for _, link := range findNodes(n, matchFunc("a", "")) {
 		for i, a := range link.Attr {
 			if a.Key == "href" {
-				if url, err := url.Parse(a.Val); err == nil && url.Host == "" {
-					url.Scheme = defaultScheme
-					url.Host = defaultHost
-					debugf("Rewrote link %v to %s", a.Val, url)
-					link.Attr[i].Val = url.String()
-				}
+				link.Attr[i].Val = absoluteURL(a.Val)
 			}
 		}
 	}
-}
-
-// getMobileURL rewrites u to be a mobile.twitter.com URL (needed for getting a basic HTML page)
-// if it isn't one already. If u isn't a twitter.com URL, returns an empty string.
-func getMobileURL(u string) string {
-	url, err := url.Parse(u)
-	if err != nil {
-		return ""
-	}
-	if url.Host == defaultHost {
-		url.Host = mobileHost
-	}
-	if url.Host != mobileHost {
-		return ""
-	}
-	return url.String()
 }
