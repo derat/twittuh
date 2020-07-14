@@ -49,7 +49,9 @@ func (t *tweet) displayName() string {
 }
 
 func (t *tweet) reply() bool {
-	return len(t.replyUsers) > 0
+	// For reasons that I don't understand, the first messages in threads sometimes show up as
+	// self-replies. It seems more sensible to treat these as non-replies.
+	return len(t.replyUsers) > 0 && (len(t.replyUsers) > 1 || t.replyUsers[0] != t.user)
 }
 
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
