@@ -101,7 +101,7 @@ func main() {
 		log.Fatal("Failed creating feed file: ", err)
 	}
 	defer os.Remove(f.Name()) // fails if we successfully rename temp file
-	if err := writeFeed(f, format, prof, tweets, user, latestID, *replies); err != nil {
+	if err := writeFeed(f, format, prof, tweets, latestID, *replies); err != nil {
 		f.Close()
 		log.Fatal("Failed writing feed: ", err)
 	}
@@ -170,7 +170,7 @@ func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
 		// in the next request. Skip retweets since they have out-of-order IDs.
 		oldestID := int64(math.MaxInt64)
 		for _, t := range newTweets {
-			if t.user == user && t.id < oldestID {
+			if t.user == prof.user && t.id < oldestID {
 				oldestID = t.id
 			}
 			// Because of the way that retweets are mixed in, we might get overlapping ranges of
@@ -207,17 +207,17 @@ func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
 // writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
 // If replies is true, the user's replies will also be included.
 func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
-	user string, latestID int64, replies bool) error {
+	latestID int64, replies bool) error {
 	author := prof.displayName()
 	feedDesc := "Tweets"
 	if replies {
 		feedDesc += " and replies"
 	}
-	feedDesc += fmt.Sprintf(" from @%v's timeline", user)
+	feedDesc += fmt.Sprintf(" from @%v's timeline", prof.user)
 
 	feed := &feeds.Feed{
 		Title:       author,
-		Link:        &feeds.Link{Href: userURL(user)},
+		Link:        &feeds.Link{Href: userURL(prof.user)},
 		Description: feedDesc,
 		Author:      &feeds.Author{Name: author},
 		Updated:     time.Now(),
