@@ -5,8 +5,12 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/net/html"
 )
 
 func TestParseTime(t *testing.T) {
@@ -37,6 +41,45 @@ func TestParseTime(t *testing.T) {
 			t.Errorf("parseTime(%q, %q) failed: %v", tc.ts, now, err)
 		} else if got := tt.Format(layout); got != tc.want {
 			t.Errorf("parseTime(%q, %q) = %q; want %q", tc.ts, now, got, tc.want)
+		}
+	}
+}
+
+func TestAddLineBreaks(t *testing.T) {
+	for _, tc := range []struct {
+		orig, want string
+	}{
+		{"<div></div>", "<div></div>"},
+		{"<div>\n</div>", "<div>\n</div>"},
+		{"<div>\n\n</div>", "<div>\n\n</div>"},
+		{"<div>word</div>", "<div>word</div>"},
+		{"<div>word\n</div>", "<div>word<br/></div>"},
+		{"<div>two words</div>", "<div>two words</div>"},
+		{"<div>first\nsecond</div>", "<div>first<br/>second</div>"},
+		{"<div>double\n\nbreak</div>", "<div>double<br/><br/>break</div>"},
+		{"<div>\nleading\nand\ntrailing\n</div>", "<div><br/>leading<br/>and<br/>trailing<br/></div>"},
+		{"<div> 1\n2</div> \n <div>3\n4 </div>", "<div> 1<br/>2</div> \n <div>3<br/>4 </div>"},
+	} {
+		root, err := html.Parse(strings.NewReader(tc.orig))
+		if err != nil {
+			t.Fatalf("Failed parsing %q: %v", tc.orig, err)
+		}
+
+		addLineBreaks(root)
+
+		// Render back to a string.
+		var b bytes.Buffer
+		if err := html.Render(&b, root); err != nil {
+			t.Fatal("Failed rendering tree: ", err)
+		}
+
+		// Drop uninteresting elements.
+		got := b.String()
+		got = strings.TrimPrefix(got, "<html><head></head><body>")
+		got = strings.TrimSuffix(got, "</body></html>")
+
+		if got != tc.want {
+			t.Errorf("addLineBreaks(%q) = %q; want %q", tc.orig, got, tc.want)
 		}
 	}
 }

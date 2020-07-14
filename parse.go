@@ -350,6 +350,8 @@ func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 		pg.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"})
 		parent.RemoveChild(link) // remove before reparenting under <strong>
 		pg.LastChild.AppendChild(link)
+
+		addLineBreaks(content)
 		pg.AppendChild(content)
 	}
 }
@@ -419,6 +421,42 @@ func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
 		div := divs[0]
 		div.Parent.RemoveChild(div) // need to remove before adding to different tree
 		return div, nil
+	}
+}
+
+// addLineBreaks replaces newlines in text nodes under n with <br> elements.
+// Feedly strips out all CSS, so we can't use "white-space: pre-wrap" like Twitter's web UI.
+func addLineBreaks(n *html.Node) {
+	for _, text := range findNodes(n, func(n *html.Node) bool { return n.Type == html.TextNode }) {
+		// Twitter looks like it also inserts innocuous spaces and newlines between <div> elements.
+		// Leave these alone.
+		if strings.TrimSpace(text.Data) == "" {
+			continue
+		}
+		parts := strings.Split(text.Data, "\n")
+		if len(parts) < 2 {
+			continue
+		}
+
+		prev := text
+		parent := text.Parent
+		for i, p := range parts {
+			// Don't bother adding empty text nodes.
+			if p != "" {
+				t := &html.Node{Type: html.TextNode, Data: p}
+				parent.InsertBefore(t, prev.NextSibling)
+				prev = t
+			}
+			// After each text node but the last one, add a line break.
+			if i < len(parts)-1 {
+				br := &html.Node{Type: html.ElementNode, DataAtom: atom.Br, Data: "br"}
+				parent.InsertBefore(br, prev.NextSibling)
+				prev = br
+			}
+		}
+
+		// Remove the original text node now that it's been replaced.
+		parent.RemoveChild(text)
 	}
 }
 
