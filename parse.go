@@ -21,7 +21,7 @@ import (
 
 // profile contains information about a user.
 type profile struct {
-	user  string // username (without '@')
+	user  string // screen name (without '@')
 	name  string // full name
 	icon  string // small (48x48) favicon URL
 	image string // large (400x400) avatar URL
@@ -35,7 +35,7 @@ func (p *profile) displayName() string {
 type tweet struct {
 	id      int64
 	href    string    // absolute URL to tweet
-	user    string    // username (without '@')
+	user    string    // screen name (without '@')
 	name    string    // full name
 	time    time.Time // approximate (Twitter just gives us age)
 	content string    // HTML content
