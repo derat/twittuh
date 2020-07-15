@@ -230,7 +230,7 @@ func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 		content, err := getTweetContent(url, ft)
 		if content == nil || err != nil {
 			if err != nil {
-				log.Print("Couldn't fetch tweet content: ", err)
+				log.Print("Couldn't add embedded tweet: ", err)
 			}
 			continue
 		}
@@ -264,8 +264,10 @@ func addEmbeddedImages(n *html.Node, ft *fetcher) {
 			}
 			continue
 		}
-		// Replace the link's children (formerly the photo page URL) with an <img> tag.
+
 		debug("Adding embedded image ", url)
+
+		// Replace the link's children (formerly the photo page URL) with an <img> tag.
 		for link.LastChild != nil {
 			link.RemoveChild(link.LastChild)
 		}
@@ -293,7 +295,17 @@ func getImageURL(url string, ft *fetcher) (string, error) {
 	} else if media := findNodes(root, matchFunc("div", "class=media")); len(media) == 0 {
 		return "", fmt.Errorf("didn't find media div in %v", url)
 	} else if imgs := findNodes(media[0], matchFunc("img")); len(imgs) == 0 {
-		// TODO: Handle images that have been marked as sensitive content.
+		// Images deemed "sensitive material" aren't included until the user posts a form.
+		// Sending another GET request for the photo page with the appropriate "show_media" and
+		// "authenticity_token" parameters seems to work.
+		if !strings.Contains(url, "authenticity_token") &&
+			len(findNodes(media[0], matchFunc("form"))) == 1 &&
+			len(findNodes(media[0], matchFunc("input", "name=show_media"))) == 1 {
+			if inputs := findNodes(media[0], matchFunc("input", "name=authenticity_token")); len(inputs) == 1 {
+				newURL := fmt.Sprintf("%s?show_media=1&authenticity_token=%v", url, getAttr(inputs[0], "value"))
+				return getImageURL(newURL, ft)
+			}
+		}
 		return "", fmt.Errorf("didn't find image in %v", url)
 	} else {
 		return getAttr(imgs[0], "src"), nil
