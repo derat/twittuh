@@ -1,5 +1,7 @@
 # twittuh
 
+[![Build Status](https://travis-ci.org/derat/twittuh.svg?branch=master)](https://travis-ci.org/derat/twittuh)
+
 This is a small Go program that scrapes a user's Twitter timeline (using the
 simple HTML-only version of the site served to clients that don't support
 JavaScript) and generates an RSS feed containing their tweets.
