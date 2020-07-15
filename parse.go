@@ -115,7 +115,7 @@ func (p *parser) proc(n *html.Node) error {
 		case p.curTweet == nil:
 			if matchFunc("table", "tweet")(n) {
 				p.curTweet = &tweet{href: absoluteURL(getAttr(n, "href"))}
-				// TODO: Check
+				debug("Starting ", p.curTweet.href)
 				defer func() {
 					p.tweets = append(p.tweets, *p.curTweet)
 					p.curTweet = nil
@@ -158,6 +158,7 @@ func (p *parser) proc(n *html.Node) error {
 			if p.curTweet.user != p.profile.user {
 				prependUserLink(n, p.curTweet.user, p.curTweet.displayName())
 			}
+			addLineBreaks(n)
 			rewriteRelativeLinks(n)
 			var b bytes.Buffer
 			if err := html.Render(&b, n); err != nil {
@@ -249,8 +250,6 @@ func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 		pg.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"})
 		parent.RemoveChild(link) // remove before reparenting under <strong>
 		pg.LastChild.AppendChild(link)
-
-		addLineBreaks(content)
 		pg.AppendChild(content)
 	}
 }
