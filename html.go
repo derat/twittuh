@@ -24,15 +24,41 @@ func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 }
 
 // matchFunc is a convenient shorthand that returns a function that can be passed to findNodes.
-// If tag is non-empty, only HTML elements with the given tag are matched.
-// If class is non-empty, only nodes with the supplied CSS class are matched.
-func matchFunc(tag, class string) func(n *html.Node) bool {
+// Only HTML elements with the given tag are matched. Expressions can take different forms:
+//   - "name"      - "name" attribute must be present
+//   - "name=val"  - "name" attribute must have value "val"
+//   - "class=val" - "class" attribute must include "val"
+func matchFunc(tag string, exprs ...string) func(n *html.Node) bool {
 	return func(n *html.Node) bool {
 		if tag != "" && !isElement(n, tag) {
 			return false
 		}
-		if class != "" && !hasClass(n, class) {
-			return false
+
+		for _, expr := range exprs {
+			parts := strings.SplitN(expr, "=", 2)
+			switch len(parts) {
+			case 1:
+				found := false
+				for _, a := range n.Attr {
+					if a.Key == parts[0] {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return false
+				}
+			case 2:
+				if parts[0] == "class" {
+					if !hasClass(n, parts[1]) {
+						return false
+					}
+				} else {
+					if getAttr(n, parts[0]) != parts[1] {
+						return false
+					}
+				}
+			}
 		}
 		return true
 	}

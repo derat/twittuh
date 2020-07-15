@@ -97,23 +97,23 @@ func (p *parser) proc(n *html.Node) error {
 		}
 	case profileSection:
 		switch {
-		case matchFunc("td", "avatar")(n):
-			if imgs := findNodes(n, func(n *html.Node) bool { return isElement(n, "img") }); len(imgs) > 0 {
+		case matchFunc("td", "class=avatar")(n):
+			if imgs := findNodes(n, matchFunc("img")); len(imgs) > 0 {
 				p.profile.icon = getAttr(imgs[0], "src")
 				p.profile.image = strings.Replace(p.profile.icon, "_normal.", "_400x400.", 1)
 			}
 			return nil // skip contents
-		case matchFunc("div", "fullname")(n):
+		case matchFunc("div", "class=fullname")(n):
 			p.profile.name = cleanText(getText(n))
 			return nil // skip contents
-		case matchFunc("span", "screen-name")(n):
+		case matchFunc("span", "class=screen-name")(n):
 			p.profile.user = cleanText(getText(n))
 			return nil // skip contents
 		}
 	case timelineSection:
 		switch {
 		case p.curTweet == nil:
-			if matchFunc("table", "tweet")(n) {
+			if matchFunc("table", "class=tweet")(n) {
 				p.curTweet = &tweet{href: absoluteURL(getAttr(n, "href"))}
 				debug("Starting ", p.curTweet.href)
 				defer func() {
@@ -122,27 +122,27 @@ func (p *parser) proc(n *html.Node) error {
 				}()
 			}
 		// In the remaining cases, we're inside a tweet.
-		case matchFunc("strong", "fullname")(n):
+		case matchFunc("strong", "class=fullname")(n):
 			p.curTweet.name = cleanText(getText(n))
 			return nil // skip contents
-		case matchFunc("div", "username")(n):
+		case matchFunc("div", "class=username")(n):
 			if hasClass(n, "tweet-reply-context") {
 				// The username(s) appear inside <a> elements nested under the div.
-				for _, a := range findNodes(n, func(n *html.Node) bool { return isElement(n, "a") }) {
+				for _, a := range findNodes(n, matchFunc("a")) {
 					p.curTweet.replyUsers = append(p.curTweet.replyUsers, bareUser(cleanText(getText(a))))
 				}
 			} else {
 				p.curTweet.user = bareUser(cleanText(getText(n)))
 			}
 			return nil // skip contents
-		case matchFunc("td", "timestamp")(n):
+		case matchFunc("td", "class=timestamp")(n):
 			var err error
 			s := strings.TrimSpace(getText(n))
 			if p.curTweet.time, err = parseTime(s, time.Now()); err != nil {
 				return fmt.Errorf("bad time %q: %v", s, err)
 			}
 			return nil // skip contents
-		case matchFunc("div", "tweet-text")(n):
+		case matchFunc("div", "class=tweet-text")(n):
 			var err error
 			if p.curTweet.id, err = strconv.ParseInt(getAttr(n, "data-id"), 10, 64); err != nil {
 				return fmt.Errorf("failed parsing ID: %v", err)
@@ -225,9 +225,7 @@ func parseTime(s string, now time.Time) (time.Time, error) {
 // addEmbeddedContent inserts the content of tweets that are embedded within n.
 // Embeds appear as <a data-expanded-url="https://twitter.com/someuser/status/...">.
 func addEmbeddedTweets(n *html.Node, ft *fetcher) {
-	for _, link := range findNodes(n, func(n *html.Node) bool {
-		return isElement(n, "a") && getAttr(n, "data-expanded-url") != ""
-	}) {
+	for _, link := range findNodes(n, matchFunc("a", "data-expanded-url")) {
 		url := getAttr(link, "data-url")
 		content, err := getTweetContent(url, ft)
 		if content == nil || err != nil {
@@ -258,9 +256,7 @@ func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 // Links to "/photo/" URLs appear as <a data-pre-embedded="true" data-url="...">.
 // Photo pages need to be fetched to get the actual image URLs.
 func addEmbeddedImages(n *html.Node, ft *fetcher) {
-	for _, link := range findNodes(n, func(n *html.Node) bool {
-		return isElement(n, "a") && getAttr(n, "data-pre-embedded") == "true"
-	}) {
+	for _, link := range findNodes(n, matchFunc("a", "data-pre-embedded=true")) {
 		url, err := getImageURL(getAttr(link, "data-url"), ft)
 		if url == "" || err != nil {
 			if err != nil {
@@ -294,9 +290,10 @@ func getImageURL(url string, ft *fetcher) (string, error) {
 		return "", fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
 		return "", fmt.Errorf("couldn't parse %v: %v", url, err)
-	} else if media := findNodes(root, matchFunc("div", "media")); len(media) == 0 {
+	} else if media := findNodes(root, matchFunc("div", "class=media")); len(media) == 0 {
 		return "", fmt.Errorf("didn't find media div in %v", url)
-	} else if imgs := findNodes(media[0], matchFunc("img", "")); len(imgs) == 0 {
+	} else if imgs := findNodes(media[0], matchFunc("img")); len(imgs) == 0 {
+		// TODO: Handle images that have been marked as sensitive content.
 		return "", fmt.Errorf("didn't find image in %v", url)
 	} else {
 		return getAttr(imgs[0], "src"), nil
@@ -313,7 +310,7 @@ func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
 		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
 		return nil, fmt.Errorf("couldn't parse %v: %v", url, err)
-	} else if divs := findNodes(root, matchFunc("div", "tweet-text")); len(divs) == 0 {
+	} else if divs := findNodes(root, matchFunc("div", "class=tweet-text")); len(divs) == 0 {
 		return nil, fmt.Errorf("didn't find content in %v", url)
 	} else {
 		div := divs[0]
@@ -377,7 +374,7 @@ func prependUserLink(n *html.Node, user, displayName string) {
 
 // rewriteRelativeLinks rewrites all relative links in n to be absolute.
 func rewriteRelativeLinks(n *html.Node) {
-	for _, link := range findNodes(n, matchFunc("a", "")) {
+	for _, link := range findNodes(n, matchFunc("a")) {
 		for i, a := range link.Attr {
 			if a.Key == "href" {
 				link.Attr[i].Val = absoluteURL(a.Val)
