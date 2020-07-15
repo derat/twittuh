@@ -17,6 +17,7 @@ import (
 // It also supports caching them locally.
 type fetcher struct {
 	cacheDir string
+	forTest  bool // if true, always read from cache and never write to cache
 }
 
 // newFetcher returns a new fetcher that will cache resources
@@ -25,7 +26,7 @@ func newFetcher(cacheDir string) (*fetcher, error) {
 	if err := os.MkdirAll(cacheDir, 0700); err != nil {
 		return nil, err
 	}
-	return &fetcher{cacheDir}, nil
+	return &fetcher{cacheDir, false}, nil
 }
 
 // fetch returns the contents of the supplied URL.
@@ -33,13 +34,15 @@ func newFetcher(cacheDir string) (*fetcher, error) {
 // and cached to disk after being downloaded otherwise.
 func (ft *fetcher) fetch(u string, useCache bool) ([]byte, error) {
 	cp := filepath.Join(ft.cacheDir, url.PathEscape(u))
-	if useCache {
+	if useCache || ft.forTest {
 		b, err := ioutil.ReadFile(cp)
 		if err == nil {
 			debugf("Got %v from cache", u)
 			return b, nil
 		} else if err != nil && !os.IsNotExist(err) {
 			return nil, err
+		} else if ft.forTest {
+			return nil, fmt.Errorf("not using network but %v doesn't exist", cp)
 		}
 	}
 
