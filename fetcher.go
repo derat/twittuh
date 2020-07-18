@@ -62,7 +62,7 @@ func (ft *fetcher) fetch(u string, useCache bool) ([]byte, error) {
 		return nil, err
 	}
 	if useCache {
-		if err := ioutil.WriteFile(cp, b, 0700); err != nil {
+		if err := ioutil.WriteFile(cp, b, 0600); err != nil {
 			os.Remove(cp)
 			return nil, err
 		}
