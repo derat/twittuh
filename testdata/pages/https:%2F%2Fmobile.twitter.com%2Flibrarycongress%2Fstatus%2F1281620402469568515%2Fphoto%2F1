@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="30efce2020addae3c60d5f51179c354be0a0ccac"/>
+    <input name="authenticity_token" type="hidden" value="fa0268566da7da34b4380a2e3b0b3452433d1182"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1281620402469568515/favorite?p=f&amp;authenticity_token=30efce2020addae3c60d5f51179c354be0a0ccac" class="favorite">
+        <a href="/statuses/1281620402469568515/favorite?p=f&amp;authenticity_token=fa0268566da7da34b4380a2e3b0b3452433d1182" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -230,11 +230,89 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1281730532531818497/favorite?p=f&amp;authenticity_token=30efce2020addae3c60d5f51179c354be0a0ccac" class="favorite">
+            <a href="/statuses/1281730532531818497/favorite?p=f&amp;authenticity_token=fa0268566da7da34b4380a2e3b0b3452433d1182" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/LarryWilson360/status/1281730532531818497/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
+            <table class="tweet  "
+       href="/dwhit1957/status/1281765853554343936?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/dwhit1957?p=i">
+      <img alt="deplorabledave" src="https://pbs.twimg.com/profile_images/1255273374915403781/3pFzLFdS_normal.jpg" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/dwhit1957?p=s">
+    <strong class="fullname">deplorabledave</strong>
+    <div class="username">
+      <span>@</span>dwhit1957
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1281765853554343936" href="/dwhit1957/status/1281765853554343936?p=p">Jul 10</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+          <a href="/GovernorGordon">@GovernorGordon</a>
+
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1281765853554343936">
+      <div class="dir-ltr" dir="ltr">  307 Wyoming area code for whole state.
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/dwhit1957/status/1281765853554343936?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/dwhit1957/reply/1281765853554343936?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1281765853554343936/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1281765853554343936/favorite?p=f&amp;authenticity_token=fa0268566da7da34b4380a2e3b0b3452433d1182" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/dwhit1957/status/1281765853554343936/actions" class="last"></a>
           </span>
     </td>
   </tr>
@@ -308,7 +386,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282329500110352386/favorite?p=f&amp;authenticity_token=30efce2020addae3c60d5f51179c354be0a0ccac" class="favorite">
+            <a href="/statuses/1282329500110352386/favorite?p=f&amp;authenticity_token=fa0268566da7da34b4380a2e3b0b3452433d1182" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -386,89 +464,11 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1281733211198853120/favorite?p=f&amp;authenticity_token=30efce2020addae3c60d5f51179c354be0a0ccac" class="favorite">
+            <a href="/statuses/1281733211198853120/favorite?p=f&amp;authenticity_token=fa0268566da7da34b4380a2e3b0b3452433d1182" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/BXNY183GC/status/1281733211198853120/actions" class="last"></a>
-          </span>
-    </td>
-  </tr>
-
-</table>
-
-
-            <table class="tweet  "
-       href="/dwhit1957/status/1281765853554343936?p=v">
-  
-<tr class="tweet-header ">
-        <td class="avatar" rowspan="3">
-    <a href="/dwhit1957?p=i">
-      <img alt="deplorabledave" src="https://pbs.twimg.com/profile_images/1255273374915403781/3pFzLFdS_normal.jpg" />
-    </a>
-  </td>
-
-      <td class="user-info">
-  <a href="/dwhit1957?p=s">
-    <strong class="fullname">deplorabledave</strong>
-    <div class="username">
-      <span>@</span>dwhit1957
-    </div>
-    
-  </a>
-</td>
-
-
-  <td class="timestamp">
-    <a name="tweet_1281765853554343936" href="/dwhit1957/status/1281765853554343936?p=p">Jul 10</a>
-  </td>
-
-</tr>
-
-<tr class="tweet-container">
-  <td colspan="2" class="tweet-content">
-
-      <div class="tweet-reply-context username">
-                Replying to
-          <a href="/librarycongress">@librarycongress</a>
-
-          <a href="/GovernorGordon">@GovernorGordon</a>
-
-        
-
-      </div>
-
-    <div class="tweet-text" data-id="1281765853554343936">
-      <div class="dir-ltr" dir="ltr">  307 Wyoming area code for whole state.
-</div>
-    </div>
-
-
-  </td>
-</tr>
-
-  <tr>
-    <td colspan="2" class="meta-and-actions">
-
-        <span class="metadata">
-          <a href="/dwhit1957/status/1281765853554343936?p=v">View conversation</a>
-          <span class="middot">&middot;</span>
-        </span>
-
-          <span class="tweet-actions">
-            <a href="/dwhit1957/reply/1281765853554343936?p=r" class="first">
-                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
-
-            </a>
-              <a href="/statuses/1281765853554343936/retweet?p=t">
-                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
-
-              </a>
-            <a href="/statuses/1281765853554343936/favorite?p=f&amp;authenticity_token=30efce2020addae3c60d5f51179c354be0a0ccac" class="favorite">
-                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
-
-            </a>
-            <a href="/dwhit1957/status/1281765853554343936/actions" class="last"></a>
           </span>
     </td>
   </tr>

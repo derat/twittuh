@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="cebc6a7443e73118da441b770f7c547a0e89ebda"/>
+    <input name="authenticity_token" type="hidden" value="4ebed76e56e331e45c3388b413018d6a7a0cbb5d"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1280835238818701312/favorite?p=f&amp;authenticity_token=cebc6a7443e73118da441b770f7c547a0e89ebda" class="favorite">
+        <a href="/statuses/1280835238818701312/favorite?p=f&amp;authenticity_token=4ebed76e56e331e45c3388b413018d6a7a0cbb5d" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,11 +229,88 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280848970542206976/favorite?p=f&amp;authenticity_token=cebc6a7443e73118da441b770f7c547a0e89ebda" class="favorite">
+            <a href="/statuses/1280848970542206976/favorite?p=f&amp;authenticity_token=4ebed76e56e331e45c3388b413018d6a7a0cbb5d" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/NicoleJOHara/status/1280848970542206976/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
+            <table class="tweet  "
+       href="/left_site/status/1280974021291630598?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/left_site?p=i">
+      <img alt="The Left-Right Site" src="https://pbs.twimg.com/profile_images/1281467376840695808/IPJJ955z_normal.jpg" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/left_site?p=s">
+    <strong class="fullname">The Left-Right Site</strong>
+    <div class="username">
+      <span>@</span>left_site
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1280974021291630598" href="/left_site/status/1280974021291630598?p=p">Jul 8</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+        
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1280974021291630598">
+      <div class="dir-ltr" dir="ltr">  <a href="https://t.co/fwUaROlj3b"rel="nofollow noopener"dir="ltr"data-expanded-url="https://left-right-site.com/2020/06/11/wharton-grad-my-ass/"data-url="https://left-right-site.com/2020/06/11/wharton-grad-my-ass/"class="twitter_external_link dir-ltr tco-link"target="_blank"title="https://left-right-site.com/2020/06/11/wharton-grad-my-ass/">left-right-site.com/2020/06/11/wha…</a>
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/left_site/status/1280974021291630598?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/left_site/reply/1280974021291630598?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1280974021291630598/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1280974021291630598/favorite?p=f&amp;authenticity_token=4ebed76e56e331e45c3388b413018d6a7a0cbb5d" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/left_site/status/1280974021291630598/actions" class="last"></a>
           </span>
     </td>
   </tr>
@@ -311,7 +388,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280848181635448833/favorite?p=f&amp;authenticity_token=cebc6a7443e73118da441b770f7c547a0e89ebda" class="favorite">
+            <a href="/statuses/1280848181635448833/favorite?p=f&amp;authenticity_token=4ebed76e56e331e45c3388b413018d6a7a0cbb5d" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -388,7 +465,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280858073540825089/favorite?p=f&amp;authenticity_token=cebc6a7443e73118da441b770f7c547a0e89ebda" class="favorite">
+            <a href="/statuses/1280858073540825089/favorite?p=f&amp;authenticity_token=4ebed76e56e331e45c3388b413018d6a7a0cbb5d" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

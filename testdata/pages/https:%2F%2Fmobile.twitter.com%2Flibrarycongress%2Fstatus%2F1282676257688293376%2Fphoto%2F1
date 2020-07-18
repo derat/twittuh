@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="16e8d31d7a03e3f82daba3a3b6e36f39882d03f4"/>
+    <input name="authenticity_token" type="hidden" value="64b07137150cc993245887dda2199d73bfbb517c"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1282676257688293376/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+        <a href="/statuses/1282676257688293376/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -234,7 +234,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282698199736688642/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282698199736688642/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -318,11 +318,89 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282855195668385792/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282855195668385792/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/KasoKim/status/1282855195668385792/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
+            <table class="tweet  "
+       href="/CarolynProcto12/status/1283101081082441728?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/CarolynProcto12?p=i">
+      <img alt="Carolyn Proctor" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/CarolynProcto12?p=s">
+    <strong class="fullname">Carolyn Proctor</strong>
+    <div class="username">
+      <span>@</span>CarolynProcto12
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1283101081082441728" href="/CarolynProcto12/status/1283101081082441728?p=p">Jul 14</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+          <a href="/colsonwhitehead">@colsonwhitehead</a>
+
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1283101081082441728">
+      <div class="dir-ltr" dir="ltr">  <a href="https://t.co/X808fJeKHt"rel="nofollow noopener"dir="ltr"data-expanded-url="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21"data-url="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21"class="twitter_external_link dir-ltr tco-link"target="_blank"title="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21">twitter.com/hotdocscinema/…</a>
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/CarolynProcto12/status/1283101081082441728?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/CarolynProcto12/reply/1283101081082441728?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1283101081082441728/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1283101081082441728/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/CarolynProcto12/status/1283101081082441728/actions" class="last"></a>
           </span>
     </td>
   </tr>
@@ -396,7 +474,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282679203197001732/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282679203197001732/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -474,89 +552,11 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282720244855799808/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282720244855799808/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/kdwhitehead5/status/1282720244855799808/actions" class="last"></a>
-          </span>
-    </td>
-  </tr>
-
-</table>
-
-
-            <table class="tweet  "
-       href="/CarolynProcto12/status/1283101081082441728?p=v">
-  
-<tr class="tweet-header ">
-        <td class="avatar" rowspan="3">
-    <a href="/CarolynProcto12?p=i">
-      <img alt="Carolyn Proctor" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" />
-    </a>
-  </td>
-
-      <td class="user-info">
-  <a href="/CarolynProcto12?p=s">
-    <strong class="fullname">Carolyn Proctor</strong>
-    <div class="username">
-      <span>@</span>CarolynProcto12
-    </div>
-    
-  </a>
-</td>
-
-
-  <td class="timestamp">
-    <a name="tweet_1283101081082441728" href="/CarolynProcto12/status/1283101081082441728?p=p">23h</a>
-  </td>
-
-</tr>
-
-<tr class="tweet-container">
-  <td colspan="2" class="tweet-content">
-
-      <div class="tweet-reply-context username">
-                Replying to
-          <a href="/librarycongress">@librarycongress</a>
-
-          <a href="/colsonwhitehead">@colsonwhitehead</a>
-
-        
-
-      </div>
-
-    <div class="tweet-text" data-id="1283101081082441728">
-      <div class="dir-ltr" dir="ltr">  <a href="https://t.co/X808fJeKHt"rel="nofollow noopener"dir="ltr"data-expanded-url="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21"data-url="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21"class="twitter_external_link dir-ltr tco-link"target="_blank"title="https://twitter.com/hotdocscinema/status/1280932257168011265?s=21">twitter.com/hotdocscinema/…</a>
-</div>
-    </div>
-
-
-  </td>
-</tr>
-
-  <tr>
-    <td colspan="2" class="meta-and-actions">
-
-        <span class="metadata">
-          <a href="/CarolynProcto12/status/1283101081082441728?p=v">View conversation</a>
-          <span class="middot">&middot;</span>
-        </span>
-
-          <span class="tweet-actions">
-            <a href="/CarolynProcto12/reply/1283101081082441728?p=r" class="first">
-                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
-
-            </a>
-              <a href="/statuses/1283101081082441728/retweet?p=t">
-                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
-
-              </a>
-            <a href="/statuses/1283101081082441728/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
-                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
-
-            </a>
-            <a href="/CarolynProcto12/status/1283101081082441728/actions" class="last"></a>
           </span>
     </td>
   </tr>
@@ -630,7 +630,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282723454601400322/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282723454601400322/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -708,7 +708,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282786959304400896/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282786959304400896/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -790,7 +790,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282893546270478336/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282893546270478336/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -868,7 +868,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282682032938561538/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282682032938561538/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -946,7 +946,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282700065258135552/favorite?p=f&amp;authenticity_token=16e8d31d7a03e3f82daba3a3b6e36f39882d03f4" class="favorite">
+            <a href="/statuses/1282700065258135552/favorite?p=f&amp;authenticity_token=64b07137150cc993245887dda2199d73bfbb517c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="e3a5fa6ed0fbbb1420ba1cd52fbe66eb6e9216b8"/>
+    <input name="authenticity_token" type="hidden" value="b408a037ab90759ee85cdef1b15cd2bc19f8687e"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1279837893939380229/favorite?p=f&amp;authenticity_token=e3a5fa6ed0fbbb1420ba1cd52fbe66eb6e9216b8" class="favorite">
+        <a href="/statuses/1279837893939380229/favorite?p=f&amp;authenticity_token=b408a037ab90759ee85cdef1b15cd2bc19f8687e" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -230,7 +230,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279841531063668736/favorite?p=f&amp;authenticity_token=e3a5fa6ed0fbbb1420ba1cd52fbe66eb6e9216b8" class="favorite">
+            <a href="/statuses/1279841531063668736/favorite?p=f&amp;authenticity_token=b408a037ab90759ee85cdef1b15cd2bc19f8687e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -307,7 +307,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279903502404333569/favorite?p=f&amp;authenticity_token=e3a5fa6ed0fbbb1420ba1cd52fbe66eb6e9216b8" class="favorite">
+            <a href="/statuses/1279903502404333569/favorite?p=f&amp;authenticity_token=b408a037ab90759ee85cdef1b15cd2bc19f8687e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

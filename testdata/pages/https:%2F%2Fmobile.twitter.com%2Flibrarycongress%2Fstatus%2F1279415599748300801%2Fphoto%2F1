@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="5ffe97f4868fdeb855a6fbaf05f70167dc19fb86"/>
+    <input name="authenticity_token" type="hidden" value="d1a470f398d3ab86a7f9945d22c65a64d0666136"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1279415599748300801/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+        <a href="/statuses/1279415599748300801/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,7 +229,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279416180202254336/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279416180202254336/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -307,7 +307,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279427841952813056/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279427841952813056/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -384,7 +384,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279417655359868929/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279417655359868929/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -461,7 +461,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279420780640698369/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279420780640698369/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -538,7 +538,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279431248822312961/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279431248822312961/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -615,7 +615,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279431928291057664/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279431928291057664/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -692,7 +692,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279421279112704000/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279421279112704000/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -770,11 +770,88 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279424552964104192/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279424552964104192/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/udaob/status/1279424552964104192/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
+            <table class="tweet  "
+       href="/Roxann_Minerals/status/1279416329938886656?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/Roxann_Minerals?p=i">
+      <img alt="Roxann Minerals 🐝" src="https://pbs.twimg.com/profile_images/726130805832081408/4-EQUy6b_normal.jpg" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/Roxann_Minerals?p=s">
+    <strong class="fullname">Roxann Minerals 🐝</strong>
+    <div class="username">
+      <span>@</span>Roxann_Minerals
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1279416329938886656" href="/Roxann_Minerals/status/1279416329938886656?p=p">Jul 4</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+        
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1279416329938886656">
+      <div class="dir-ltr" dir="ltr">  Happy 4th!  Let us just acknowledge something. ⁣&#10;⁣&#10;Every man with a red dot on his face&#10;who signed the Declaration of Independence&#10;OWNED and enslaved Africans.&#10;Over 75% of them. &#10;&#10;The rest permitted it. <a href="https://t.co/pFU7UNIlz3"data-pre-embedded="true"rel="nofollow"data-entity-id="1279416219054100481"dir="ltr"data-url="https://twitter.com/Roxann_Minerals/status/1279416329938886656/photo/1"data-tco-id="pFU7UNIlz3"class="twitter_external_link dir-ltr tco-link has-expanded-path"target="_top"data-expanded-path="/Roxann_Minerals/status/1279416329938886656/photo/1">pic.twitter.com/pFU7UNIlz3</a>
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/Roxann_Minerals/status/1279416329938886656?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/Roxann_Minerals/reply/1279416329938886656?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1279416329938886656/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1279416329938886656/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/Roxann_Minerals/status/1279416329938886656/actions" class="last"></a>
           </span>
     </td>
   </tr>
@@ -848,7 +925,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279422150865154048/favorite?p=f&amp;authenticity_token=5ffe97f4868fdeb855a6fbaf05f70167dc19fb86" class="favorite">
+            <a href="/statuses/1279422150865154048/favorite?p=f&amp;authenticity_token=d1a470f398d3ab86a7f9945d22c65a64d0666136" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

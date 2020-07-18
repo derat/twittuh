@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="42603214555e01a4928495d1333e5396b9639a33"/>
+    <input name="authenticity_token" type="hidden" value="06b18169e6493961b05189264a9c541a12f3cf5e"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1279385670239375366/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+        <a href="/statuses/1279385670239375366/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,7 +229,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279473117048561664/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+            <a href="/statuses/1279473117048561664/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -306,7 +306,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279386987355652096/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+            <a href="/statuses/1279386987355652096/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -383,7 +383,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279393787261980675/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+            <a href="/statuses/1279393787261980675/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -460,7 +460,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279410545624518656/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+            <a href="/statuses/1279410545624518656/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -478,13 +478,13 @@
 <tr class="tweet-header ">
         <td class="avatar" rowspan="3">
     <a href="/MissionaryBLMM?p=i">
-      <img alt="Black Lives Matter©🇺🇸2020 Candidate #ALMBLM© IPO" src="https://pbs.twimg.com/profile_images/753189010336514048/eZVNy2b4_normal.jpg" />
+      <img alt="Black Lives Matter©🇺🇸Candidate 2020 #ALMBLM© IPO" src="https://pbs.twimg.com/profile_images/753189010336514048/eZVNy2b4_normal.jpg" />
     </a>
   </td>
 
       <td class="user-info">
   <a href="/MissionaryBLMM?p=s">
-    <strong class="fullname">Black Lives Matter©🇺🇸2020 Candidate #ALMBLM© IPO</strong>
+    <strong class="fullname">Black Lives Matter©🇺🇸Candidate 2020 #ALMBLM© IPO</strong>
     <div class="username">
       <span>@</span>MissionaryBLMM
     </div>
@@ -537,7 +537,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279439148273803265/favorite?p=f&amp;authenticity_token=42603214555e01a4928495d1333e5396b9639a33" class="favorite">
+            <a href="/statuses/1279439148273803265/favorite?p=f&amp;authenticity_token=06b18169e6493961b05189264a9c541a12f3cf5e" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

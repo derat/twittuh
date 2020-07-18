@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="83a36533eb58aae6ec49f8afa47f273b4db52493"/>
+    <input name="authenticity_token" type="hidden" value="6428fcd4476c253f81fa56476f0d52560bde602d"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1281650178915815424/favorite?p=f&amp;authenticity_token=83a36533eb58aae6ec49f8afa47f273b4db52493" class="favorite">
+        <a href="/statuses/1281650178915815424/favorite?p=f&amp;authenticity_token=6428fcd4476c253f81fa56476f0d52560bde602d" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,7 +229,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1281651927399325698/favorite?p=f&amp;authenticity_token=83a36533eb58aae6ec49f8afa47f273b4db52493" class="favorite">
+            <a href="/statuses/1281651927399325698/favorite?p=f&amp;authenticity_token=6428fcd4476c253f81fa56476f0d52560bde602d" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

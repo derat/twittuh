@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="6a79be93bc369558c84c4149761a544946978565"/>
+    <input name="authenticity_token" type="hidden" value="f09cb868d402aae06e6cf2e4defcf8a2a60976cf"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1280185964560777216/favorite?p=f&amp;authenticity_token=6a79be93bc369558c84c4149761a544946978565" class="favorite">
+        <a href="/statuses/1280185964560777216/favorite?p=f&amp;authenticity_token=f09cb868d402aae06e6cf2e4defcf8a2a60976cf" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>

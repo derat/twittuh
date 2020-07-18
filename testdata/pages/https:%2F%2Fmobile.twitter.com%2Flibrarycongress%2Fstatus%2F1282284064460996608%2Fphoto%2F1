@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="c199b31949140e8c1da878d6f2ac89fcd24c96ee"/>
+    <input name="authenticity_token" type="hidden" value="a9013a0677288bb7265a6c50be451c1812308694"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1282284064460996608/favorite?p=f&amp;authenticity_token=c199b31949140e8c1da878d6f2ac89fcd24c96ee" class="favorite">
+        <a href="/statuses/1282284064460996608/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,7 +229,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282287060947271681/favorite?p=f&amp;authenticity_token=c199b31949140e8c1da878d6f2ac89fcd24c96ee" class="favorite">
+            <a href="/statuses/1282287060947271681/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -306,7 +306,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282297200215760896/favorite?p=f&amp;authenticity_token=c199b31949140e8c1da878d6f2ac89fcd24c96ee" class="favorite">
+            <a href="/statuses/1282297200215760896/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -383,7 +383,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282317963123724290/favorite?p=f&amp;authenticity_token=c199b31949140e8c1da878d6f2ac89fcd24c96ee" class="favorite">
+            <a href="/statuses/1282317963123724290/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -460,11 +460,88 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1282289030969925634/favorite?p=f&amp;authenticity_token=c199b31949140e8c1da878d6f2ac89fcd24c96ee" class="favorite">
+            <a href="/statuses/1282289030969925634/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
             <a href="/johnson7777777/status/1282289030969925634/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
+            <table class="tweet  "
+       href="/amabirch/status/1282310026170900482?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/amabirch?p=i">
+      <img alt="The Poet is Here" src="https://pbs.twimg.com/profile_images/1282291001479110656/PWsV7_fE_normal.jpg" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/amabirch?p=s">
+    <strong class="fullname">The Poet is Here</strong>
+    <div class="username">
+      <span>@</span>amabirch
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1282310026170900482" href="/amabirch/status/1282310026170900482?p=p">Jul 12</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+        
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1282310026170900482">
+      <div class="dir-ltr" dir="ltr">  Can you purchase a copy of the book? &#10;&#10;Here is the preferred link: <a href="https://t.co/8z0FVVxUuA"rel="nofollow noopener"dir="ltr"data-expanded-url="https://bit.ly/BuyFergusonInterviewProject"data-url="https://bit.ly/BuyFergusonInterviewProject"class="twitter_external_link dir-ltr tco-link"target="_blank"title="https://bit.ly/BuyFergusonInterviewProject">bit.ly/BuyFergusonInt…</a>. &#10;&#10;If you can&#39;t buy a book, can you tell others about my book and fundraiser? &#10;&#10;Sincerely,&#10;&#10;Ama
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/amabirch/status/1282310026170900482?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/amabirch/reply/1282310026170900482?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1282310026170900482/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1282310026170900482/favorite?p=f&amp;authenticity_token=a9013a0677288bb7265a6c50be451c1812308694" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/amabirch/status/1282310026170900482/actions" class="last"></a>
           </span>
     </td>
   </tr>

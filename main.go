@@ -13,7 +13,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -33,8 +32,7 @@ const (
 )
 
 const (
-	baseFetchURL = "https://mobile.twitter.com/" // base timeline URL to fetch
-	titleLen     = 80                            // max length of title text in feed
+	titleLen = 80 // max length of title text in feed
 )
 
 var verbose = false // enable verbose logging
@@ -84,7 +82,7 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old latest ID %v", user, oldLatestID)
-	prof, tweets, latestID, err := getTimeline(ft, user, oldLatestID, *pages, *embeds)
+	prof, tweets, latestID, err := getTimeline(ft, user, oldLatestID, *pages, *embeds, false /* cache */)
 	if err == errUnchanged {
 		debug("No new tweets; exiting without writing feed")
 		os.Exit(0)
@@ -129,30 +127,19 @@ var (
 //
 // If the ID of the latest tweet matches oldLatestID, errUnchanged is returned
 // alongside an empty slice. This indicates that no new Tweets are present.
-//
-// The API that we have to work with here seems problematic:
-//   - The tweets belonging to a user appear to be assigned monotonically increasing IDs.
-//   - The user's tweets on their timeline page are ordered by descending ID.
-//   - We can pass a 'max_id' parameter to control the starting point.
-//   - So far, so good... but when the user A retweets user B's tweet, the tweet appears in A's
-//     timeline in the appropriate chronological position, but with the completely out-of-order ID
-//     that was assigned when B originally tweeted it.
-//   - Even worse, passing a retweet's ID as 'max_id' doesn't seem to work -- the retweet is
-//     skipped. For a given max', it looks like Twitter might find the user's tweet with the
-//     largest ID <= max and start there. Confusingly, any subsequent retweets look like they're
-//     still included.
 func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
-	embeds bool) (prof profile, tweets []tweet, latestID int64, err error) {
+	embeds, cache bool) (prof profile, tweets []tweet, latestID int64, err error) {
 	seenIDs := make(map[int64]struct{})
-	baseURL := baseFetchURL + user
+	baseURL := mobileURL(userURL(user))
 	url := baseURL
 	for np := 0; np < pages; np++ {
-		b, err := ft.fetch(url, false /* useCache */)
+		b, err := ft.fetch(url, cache)
 		if err != nil {
 			return prof, tweets, 0, err
 		}
 		var newTweets []tweet
-		if prof, newTweets, err = parse(bytes.NewReader(b), ft, embeds); err != nil {
+		var nextURL string
+		if prof, newTweets, nextURL, err = parse(bytes.NewReader(b), ft, embeds); err != nil {
 			return prof, tweets, latestID, err
 		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
 			return prof, tweets, latestID, nil
@@ -166,13 +153,7 @@ func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
 			}
 		}
 
-		// Keep track of the ID of the oldest tweet on the page so we can figure out where to start
-		// in the next request. Skip retweets since they have out-of-order IDs.
-		oldestID := int64(math.MaxInt64)
 		for _, t := range newTweets {
-			if t.user == prof.user && t.id < oldestID {
-				oldestID = t.id
-			}
 			// Because of the way that retweets are mixed in, we might get overlapping ranges of
 			// tweets in subsequent requests.
 			if _, ok := seenIDs[t.id]; !ok {
@@ -181,23 +162,10 @@ func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
 			}
 		}
 
-		// If we didn't see any of the user's own tweets on the page, we don't have any way of
-		// knowing where to start next time. For example, the user might've posted tweets 21 and 22
-		// and later retweeted tweets 1-20. The first timeline page will end at tweet 1 in this
-		// case.
-		if oldestID == math.MaxInt64 {
-			log.Print("Didn't find any non-retweets in ", url)
-			break
+		if nextURL == "" {
+			break // reached the beginning of the timeline?
 		}
-
-		// Pass oldestID instead of oldestID-1 here to work around the behavior described above,
-		// where timeline pages never seem to start with retweets.
-		oldURL := url
-		if url = fmt.Sprintf("%s?max_id=%v", baseURL, oldestID); url == oldURL {
-			// Don't fetch the same page twice.
-			log.Print("Didn't find any additional non-retweets in ", url)
-			break
-		}
+		url = nextURL
 	}
 
 	debugf("Parsed %v tweet(s)", len(tweets))
@@ -317,7 +285,7 @@ func debugParse(ft *fetcher, p string, replies, embeds bool) error {
 	}
 	defer f.Close()
 
-	prof, tweets, err := parse(f, ft, embeds)
+	prof, tweets, _, err := parse(f, ft, embeds)
 	if err != nil {
 		return err
 	}

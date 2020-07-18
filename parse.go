@@ -55,16 +55,16 @@ func (t *tweet) reply() bool {
 }
 
 // parse reads an HTML document containing a Twitter timeline from r and returns its tweets.
-func parse(r io.Reader, ft *fetcher, embeds bool) (profile, []tweet, error) {
+func parse(r io.Reader, ft *fetcher, embeds bool) (prof profile, tweets []tweet, nextURL string, err error) {
 	root, err := html.Parse(r)
 	if err != nil {
-		return profile{}, nil, err
+		return profile{}, nil, "", err
 	}
 	p := parser{fetcher: ft, embeds: embeds}
 	if err := p.proc(root); err != nil {
-		return profile{}, nil, err
+		return profile{}, nil, "", err
 	}
-	return p.profile, p.tweets, nil
+	return p.profile, p.tweets, p.nextURL, nil
 }
 
 // section describes the section of the timeline page being parsed.
@@ -77,12 +77,14 @@ const (
 )
 
 type parser struct {
-	fetcher  *fetcher
-	embeds   bool    // insert embedded images and tweets
-	section  section // current section being parsed
+	fetcher *fetcher
+	embeds  bool    // insert embedded images and tweets
+	section section // current section being parsed
+
 	profile  profile // information about timeline owner
-	curTweet *tweet  // in-progress tweet
 	tweets   []tweet // completed tweets
+	curTweet *tweet  // in-progress tweet
+	nextURL  string  // URL from 'more' button linking to older tweets
 }
 
 func (p *parser) proc(n *html.Node) error {
@@ -120,6 +122,12 @@ func (p *parser) proc(n *html.Node) error {
 					p.tweets = append(p.tweets, *p.curTweet)
 					p.curTweet = nil
 				}()
+			} else if matchFunc("div", "class=w-button-more")(n) {
+				if links := findNodes(n, matchFunc("a")); len(links) == 0 {
+					return errors.New("no link in 'more' button")
+				} else if p.nextURL = mobileURL(absoluteURL(getAttr(links[0], "href"))); p.nextURL == "" {
+					return errors.New("bad link in 'more' button")
+				}
 			}
 		// In the remaining cases, we're inside a tweet.
 		case matchFunc("strong", "class=fullname")(n):

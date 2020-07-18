@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="d6d3a8c6cb4658486ebbb7bb1b7c32ca8940aa02"/>
+    <input name="authenticity_token" type="hidden" value="a98627c3a6f156b36a70543dec5af436baf26914"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1278705457289400321/favorite?p=f&amp;authenticity_token=d6d3a8c6cb4658486ebbb7bb1b7c32ca8940aa02" class="favorite">
+        <a href="/statuses/1278705457289400321/favorite?p=f&amp;authenticity_token=a98627c3a6f156b36a70543dec5af436baf26914" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -164,6 +164,83 @@
 
 
       <div class="timeline replies">
+            <table class="tweet  "
+       href="/aimhigh101tips/status/1278713205318201350?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/aimhigh101tips?p=i">
+      <img alt="brad" src="https://pbs.twimg.com/profile_images/1113485903090073603/Mjo6odMh_normal.png" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/aimhigh101tips?p=s">
+    <strong class="fullname">brad</strong>
+    <div class="username">
+      <span>@</span>aimhigh101tips
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1278713205318201350" href="/aimhigh101tips/status/1278713205318201350?p=p">Jul 2</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+        
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1278713205318201350">
+      <div class="dir-ltr" dir="ltr">  I can&#39;t say anything more important: help all kids do the best they can. Give kids the wisdom they deserve - FREE grades 5-12 my <a href="https://t.co/FiUpxQDYAt"rel="nofollow noopener"dir="ltr"data-expanded-url="http://aimhighteentips.com"data-url="http://aimhighteentips.com"class="twitter_external_link dir-ltr tco-link"target="_blank"title="http://aimhighteentips.com">aimhighteentips.com</a> Over 4 million Likes and over 4 million followers <a href="https://t.co/18taXt44oS"rel="nofollow noopener"dir="ltr"data-expanded-url="http://www.facebook.com/aimhightips"data-url="http://www.facebook.com/aimhightips"class="twitter_external_link dir-ltr tco-link"target="_blank"title="http://www.facebook.com/aimhightips">facebook.com/aimhightips</a> No other wisdom for children is more liked.
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/aimhigh101tips/status/1278713205318201350?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/aimhigh101tips/reply/1278713205318201350?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1278713205318201350/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1278713205318201350/favorite?p=f&amp;authenticity_token=a98627c3a6f156b36a70543dec5af436baf26914" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/aimhigh101tips/status/1278713205318201350/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
       </div>
 
 

@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="da45cf917043f663774b26bafe36fd23c0508b94"/>
+    <input name="authenticity_token" type="hidden" value="248580d7a893b7bb5579fbbb178fa258fa72c61c"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1280170564569751552/favorite?p=f&amp;authenticity_token=da45cf917043f663774b26bafe36fd23c0508b94" class="favorite">
+        <a href="/statuses/1280170564569751552/favorite?p=f&amp;authenticity_token=248580d7a893b7bb5579fbbb178fa258fa72c61c" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -229,7 +229,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280171479381020672/favorite?p=f&amp;authenticity_token=da45cf917043f663774b26bafe36fd23c0508b94" class="favorite">
+            <a href="/statuses/1280171479381020672/favorite?p=f&amp;authenticity_token=248580d7a893b7bb5579fbbb178fa258fa72c61c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -306,7 +306,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280206181634580487/favorite?p=f&amp;authenticity_token=da45cf917043f663774b26bafe36fd23c0508b94" class="favorite">
+            <a href="/statuses/1280206181634580487/favorite?p=f&amp;authenticity_token=248580d7a893b7bb5579fbbb178fa258fa72c61c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -383,7 +383,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1280180038617501701/favorite?p=f&amp;authenticity_token=da45cf917043f663774b26bafe36fd23c0508b94" class="favorite">
+            <a href="/statuses/1280180038617501701/favorite?p=f&amp;authenticity_token=248580d7a893b7bb5579fbbb178fa258fa72c61c" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>

@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,7 +18,10 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-var updateGolden = flag.Bool("update-golden", false, "Update end-to-end test's golden file")
+var (
+	updateGolden = flag.Bool("update-golden", false, "Update end-to-end test's golden file")
+	updatePages  = flag.Bool("update-pages", false, "Update end-to-end test's page cache")
+)
 
 func TestE2E(t *testing.T) {
 	const (
@@ -30,10 +35,19 @@ func TestE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ft.forTest = true // disallow network access
+
+	if *updatePages {
+		pat := filepath.Join(pageDir, "*")
+		if err := exec.Command("git", "rm", "-f", "--ignore-unmatch", pat).Run(); err != nil {
+			t.Fatalf("Failed deleting %v: %v", pat, err)
+		}
+	} else {
+		ft.forTest = true // disallow network access
+	}
 
 	// Generate the feed.
-	prof, tweets, latestID, err := getTimeline(ft, user, 0 /* oldLatestID */, numPages, true /* embeds */)
+	prof, tweets, latestID, err := getTimeline(ft, user, 0 /* oldLatestID */, numPages,
+		true /* embeds */, *updatePages /* cache */)
 	if err != nil {
 		t.Fatalf("getTimeline(ft, %q, ...) failed: %v", user, err)
 	}

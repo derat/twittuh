@@ -86,7 +86,7 @@
                   <td class="follow-button-container">
       <form action="/librarycongress/follow" method="post">
       <span class="m2-auth-token">
-    <input name="authenticity_token" type="hidden" value="a6f2af68e6316c1b9b3bbc14401d99f7f11761a6"/>
+    <input name="authenticity_token" type="hidden" value="0ef5bb7d6cf2b27a1cfc31e5b1382727133a5079"/>
   </span>
     
       <span class="w-button-common w-button-follow">
@@ -142,7 +142,7 @@
           </a>
     </td>
     <td class="action">
-        <a href="/statuses/1279113159077478400/favorite?p=f&amp;authenticity_token=a6f2af68e6316c1b9b3bbc14401d99f7f11761a6" class="favorite">
+        <a href="/statuses/1279113159077478400/favorite?p=f&amp;authenticity_token=0ef5bb7d6cf2b27a1cfc31e5b1382727133a5079" class="favorite">
                 <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/detail_heart.gif">
 
         </a>
@@ -164,6 +164,84 @@
 
 
       <div class="timeline replies">
+            <table class="tweet  "
+       href="/ReciteSocial/status/1279132536032112642?p=v">
+  
+<tr class="tweet-header ">
+        <td class="avatar" rowspan="3">
+    <a href="/ReciteSocial?p=i">
+      <img alt="Recite Social" src="https://pbs.twimg.com/profile_images/912843066007986176/rtVKCTiv_normal.jpg" />
+    </a>
+  </td>
+
+      <td class="user-info">
+  <a href="/ReciteSocial?p=s">
+    <strong class="fullname">Recite Social</strong>
+    <div class="username">
+      <span>@</span>ReciteSocial
+    </div>
+    
+  </a>
+</td>
+
+
+  <td class="timestamp">
+    <a name="tweet_1279132536032112642" href="/ReciteSocial/status/1279132536032112642?p=p">Jul 3</a>
+  </td>
+
+</tr>
+
+<tr class="tweet-container">
+  <td colspan="2" class="tweet-content">
+
+      <div class="tweet-reply-context username">
+                Replying to
+          <a href="/librarycongress">@librarycongress</a>
+
+          <a href="/DailyCaller">@DailyCaller</a>
+
+        
+
+      </div>
+
+    <div class="tweet-text" data-id="1279132536032112642">
+      <div class="dir-ltr" dir="ltr">  Your Tweet was quoted in an article by <a href="/DailyCaller"class="twitter-atreply dir-ltr"dir="ltr"data-mentioned-user-id="39308549"data-screenname="DailyCaller">@DailyCaller</a>  <a href="https://t.co/3J09EucFO0"rel="nofollow noopener"dir="ltr"data-expanded-url="https://dailycaller.com/2020/07/03/original-rough-draught-thomas-jeffersons-declaration-of-independence/"data-url="https://dailycaller.com/2020/07/03/original-rough-draught-thomas-jeffersons-declaration-of-independence/"class="twitter_external_link dir-ltr tco-link"target="_blank"title="https://dailycaller.com/2020/07/03/original-rough-draught-thomas-jeffersons-declaration-of-independence/">dailycaller.com/2020/07/03/ori…</a>
+</div>
+    </div>
+
+
+  </td>
+</tr>
+
+  <tr>
+    <td colspan="2" class="meta-and-actions">
+
+        <span class="metadata">
+          <a href="/ReciteSocial/status/1279132536032112642?p=v">View conversation</a>
+          <span class="middot">&middot;</span>
+        </span>
+
+          <span class="tweet-actions">
+            <a href="/ReciteSocial/reply/1279132536032112642?p=r" class="first">
+                <img alt="Reply"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_reply.gif">
+
+            </a>
+              <a href="/statuses/1279132536032112642/retweet?p=t">
+                    <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
+
+              </a>
+            <a href="/statuses/1279132536032112642/favorite?p=f&amp;authenticity_token=0ef5bb7d6cf2b27a1cfc31e5b1382727133a5079" class="favorite">
+                  <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
+
+            </a>
+            <a href="/ReciteSocial/status/1279132536032112642/actions" class="last"></a>
+          </span>
+    </td>
+  </tr>
+
+</table>
+
+
             <table class="tweet  "
        href="/LocSerendipity/status/1279115013937082368?p=v">
   
@@ -229,7 +307,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279115013937082368/favorite?p=f&amp;authenticity_token=a6f2af68e6316c1b9b3bbc14401d99f7f11761a6" class="favorite">
+            <a href="/statuses/1279115013937082368/favorite?p=f&amp;authenticity_token=0ef5bb7d6cf2b27a1cfc31e5b1382727133a5079" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
@@ -306,7 +384,7 @@
                     <img alt="Retweet"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_rt.gif">
 
               </a>
-            <a href="/statuses/1279114593508503554/favorite?p=f&amp;authenticity_token=a6f2af68e6316c1b9b3bbc14401d99f7f11761a6" class="favorite">
+            <a href="/statuses/1279114593508503554/favorite?p=f&amp;authenticity_token=0ef5bb7d6cf2b27a1cfc31e5b1382727133a5079" class="favorite">
                   <img alt="Like"   src="https://ma.twimg.com/twitter-mobile/a8491f04da4e54be98cff3a86c58f23a770c26bd/images/sprites/tweet_heart.gif">
 
             </a>
