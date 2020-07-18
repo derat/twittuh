@@ -33,6 +33,8 @@ const (
 
 const (
 	titleLen = 80 // max length of title text in feed
+
+	defaultMode os.FileMode = 0644 // default mode for new feed files
 )
 
 var verbose = false // enable verbose logging
@@ -99,6 +101,7 @@ func main() {
 		log.Fatal("Failed creating feed file: ", err)
 	}
 	defer os.Remove(f.Name()) // fails if we successfully rename temp file
+
 	if err := writeFeed(f, format, prof, tweets, latestID, *replies); err != nil {
 		f.Close()
 		log.Fatal("Failed writing feed: ", err)
@@ -106,10 +109,12 @@ func main() {
 	if err := f.Close(); err != nil {
 		log.Fatal("Failed closing feed file: ", err)
 	}
+	mode := defaultMode // ioutil.TempFile seems to use 0600 by default
 	if fi, err := os.Stat(feedPath); err == nil {
-		if err := os.Chmod(f.Name(), fi.Mode()); err != nil {
-			log.Print("Failed setting mode: ", err)
-		}
+		mode = fi.Mode()
+	}
+	if err := os.Chmod(f.Name(), mode); err != nil {
+		log.Print("Failed setting mode: ", err)
 	}
 	if err := os.Rename(f.Name(), feedPath); err != nil {
 		log.Fatal("Failed replacing feed file: ", err)

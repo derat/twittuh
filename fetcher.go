@@ -23,7 +23,7 @@ type fetcher struct {
 // newFetcher returns a new fetcher that will cache resources
 // within the supplied directory.
 func newFetcher(cacheDir string) (*fetcher, error) {
-	if err := os.MkdirAll(cacheDir, 0700); err != nil {
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return nil, err
 	}
 	return &fetcher{cacheDir, false}, nil
@@ -62,7 +62,7 @@ func (ft *fetcher) fetch(u string, useCache bool) ([]byte, error) {
 		return nil, err
 	}
 	if useCache {
-		if err := ioutil.WriteFile(cp, b, 0600); err != nil {
+		if err := ioutil.WriteFile(cp, b, 0644); err != nil {
 			os.Remove(cp)
 			return nil, err
 		}
