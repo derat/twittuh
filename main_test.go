@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"testing"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/gorilla/feeds"
 )
+
+var updateGolden = flag.Bool("update-golden", false, "Update end-to-end test's golden file")
 
 func TestE2E(t *testing.T) {
 	const (
@@ -37,6 +40,12 @@ func TestE2E(t *testing.T) {
 	var out bytes.Buffer
 	if err := writeFeed(&out, jsonFormat, prof, tweets, latestID, false /* replies */); err != nil {
 		t.Fatal("writeFeed(...) failed: ", err)
+	}
+	if *updateGolden {
+		if err := ioutil.WriteFile(goldenPath, out.Bytes(), 0644); err != nil {
+			t.Fatal("Failed updating golden file: ", err)
+		}
+		return
 	}
 	var got feeds.JSONFeed
 	if err := json.Unmarshal(out.Bytes(), &got); err != nil {

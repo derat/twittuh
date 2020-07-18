@@ -56,7 +56,7 @@ func mobileURL(u string) string {
 }
 
 // absoluteURL rewrites s to be an absolute twitter.com URL if relative.
-// If s is already absolute, it is returned unchanged.
+// If s is already absolute (regardless of host), it is returned unchanged.
 func absoluteURL(s string) string {
 	if s == "" {
 		return s

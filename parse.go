@@ -156,7 +156,7 @@ func (p *parser) proc(n *html.Node) error {
 				addEmbeddedImages(n, p.fetcher)
 			}
 			if p.curTweet.user != p.profile.user {
-				prependUserLink(n, p.curTweet.user, p.curTweet.displayName())
+				prependLink(n, p.curTweet.href, p.curTweet.displayName())
 			}
 			addLineBreaks(n)
 			rewriteRelativeLinks(n)
@@ -367,20 +367,18 @@ func addLineBreaks(n *html.Node) {
 	}
 }
 
-// prependUserLink prepends a link to the supplied user within n.
-// This is useful for attributing retweets.
-func prependUserLink(n *html.Node, user, displayName string) {
+// prependLink prepends a bolded link to url within n.
+func prependLink(n *html.Node, url, displayName string) {
 	link := &html.Node{
 		Type:     html.ElementNode,
 		DataAtom: atom.A,
 		Data:     "a",
-		Attr:     []html.Attribute{html.Attribute{Key: "href", Val: userURL(user)}},
+		Attr:     []html.Attribute{html.Attribute{Key: "href", Val: url}},
 	}
 	link.AppendChild(&html.Node{Type: html.TextNode, Data: displayName})
 
 	strong := &html.Node{Type: html.ElementNode, DataAtom: atom.Strong, Data: "strong"}
 	strong.AppendChild(link)
-
 	n.InsertBefore(strong, n.FirstChild)
 }
 
