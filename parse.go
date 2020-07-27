@@ -64,6 +64,9 @@ func parse(r io.Reader, ft *fetcher, embeds bool) (prof profile, tweets []tweet,
 	if err := p.proc(root); err != nil {
 		return profile{}, nil, "", err
 	}
+	if p.profile.user == "" {
+		return p.profile, p.tweets, p.nextURL, errors.New("didn't find profile")
+	}
 	return p.profile, p.tweets, p.nextURL, nil
 }
 

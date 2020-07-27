@@ -53,12 +53,16 @@ func main() {
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	pages := flag.Int("pages", 3, "Timeline pages to request (20 tweets/replies per page)")
 	replies := flag.Bool("replies", false, "Include the user's replies")
+	userAgent := flag.String("user-agent", "", "User-Agent header to include in HTTP requests")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
 	ft, err := newFetcher(*cacheDir)
 	if err != nil {
 		log.Fatal("Failed initializing fetcher: ", err)
+	}
+	if *userAgent != "" {
+		ft.userAgent = *userAgent
 	}
 
 	if *debugFile != "" {
@@ -88,10 +92,10 @@ func main() {
 	if err == errUnchanged {
 		debug("No new tweets; exiting without writing feed")
 		os.Exit(0)
-	} else if err == errPossibleGap {
-		log.Print("Possible gap in tweets (run more frequently or increase -pages)")
 	} else if err != nil {
 		log.Fatalf("Failed getting tweets for %v: %v", user, err)
+	} else if len(tweets) == 0 {
+		log.Fatalf("No tweets found for %v", user)
 	}
 
 	// Write to a temp file and then replace the feed atomically to preserve the old version if
@@ -122,8 +126,7 @@ func main() {
 }
 
 var (
-	errUnchanged   = errors.New("no new tweets")
-	errPossibleGap = errors.New("possible gap in tweets")
+	errUnchanged = errors.New("no new tweets")
 )
 
 // getTweets downloads and returns tweets from the supplied user's timeline.
