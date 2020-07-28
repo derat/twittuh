@@ -330,6 +330,9 @@ func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
 	if url = mobileURL(url); !strings.Contains(url, "/status/") {
 		return nil, nil
 	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
+		if serr, ok := err.(*fetchStatusError); ok && serr.code == 404 {
+			return nil, nil // disregard 404 -- tweet deleted?
+		}
 		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
 		return nil, fmt.Errorf("couldn't parse %v: %v", url, err)

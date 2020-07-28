@@ -36,6 +36,17 @@ func newFetcher(cacheDir string) (*fetcher, error) {
 	}, nil
 }
 
+// fetchStatusError is returned by fetch if the server returns a non-200 status.
+// It implements the error interface.
+type fetchStatusError struct {
+	err  error
+	code int
+}
+
+func (e *fetchStatusError) Error() string {
+	return e.err.Error()
+}
+
 // fetch returns the contents of the supplied URL.
 // If useCache is true, the contents are read from disk if possible
 // and cached to disk after being downloaded otherwise.
@@ -65,7 +76,7 @@ func (ft *fetcher) fetch(u string, useCache bool) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("server returned %q", resp.Status)
+		return nil, &fetchStatusError{fmt.Errorf("server returned %q", resp.Status), resp.StatusCode}
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
