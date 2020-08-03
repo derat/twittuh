@@ -241,7 +241,15 @@ func addEmbeddedTweets(n *html.Node, ft *fetcher) {
 		content, err := getTweetContent(url, ft)
 		if content == nil || err != nil {
 			if err != nil {
-				log.Print("Couldn't add embedded tweet: ", err)
+				debug("Couldn't add embedded tweet: ", err)
+
+				// The tweet was probably deleted or made private.
+				// Wrap the link in a strikethrough.
+				parent := link.Parent
+				st := &html.Node{Type: html.ElementNode, DataAtom: atom.S, Data: "s"}
+				parent.InsertBefore(st, link)
+				parent.RemoveChild(link)
+				st.AppendChild(link)
 			}
 			continue
 		}
@@ -330,9 +338,6 @@ func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
 	if url = mobileURL(url); !strings.Contains(url, "/status/") {
 		return nil, nil
 	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
-		if serr, ok := err.(*fetchStatusError); ok && serr.code == 404 {
-			return nil, nil // disregard 404 -- tweet deleted?
-		}
 		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
 		return nil, fmt.Errorf("couldn't parse %v: %v", url, err)
