@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -53,6 +54,7 @@ func main() {
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	pages := flag.Int("pages", 3, "Timeline pages to request (20 tweets/replies per page)")
 	replies := flag.Bool("replies", false, "Include the user's replies")
+	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	userAgent := flag.String("user-agent", "", "User-Agent header to include in HTTP requests")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
@@ -106,7 +108,7 @@ func main() {
 	}
 	defer os.Remove(f.Name()) // fails if we successfully rename temp file
 
-	if err := writeFeed(f, format, prof, tweets, latestID, *replies); err != nil {
+	if err := writeFeed(f, format, prof, tweets, latestID, *replies, strings.Split(*skipUsers, ",")); err != nil {
 		f.Close()
 		log.Fatal("Failed writing feed: ", err)
 	}
@@ -183,7 +185,7 @@ func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
 // writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
 // If replies is true, the user's replies will also be included.
 func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
-	latestID int64, replies bool) error {
+	latestID int64, replies bool, skipUsers []string) error {
 	author := prof.displayName()
 	feedDesc := "Tweets"
 	if replies {
@@ -203,8 +205,17 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 		feed.Image = &feeds.Image{Url: prof.image}
 	}
 
+	// User-supplied names may not have the canonical casing.
+	skipUsersMap := make(map[string]struct{})
+	for _, u := range skipUsers {
+		skipUsersMap[strings.ToLower(bareUser(u))] = struct{}{}
+	}
+
 	for _, t := range tweets {
 		if !replies && t.reply() {
+			continue
+		}
+		if _, ok := skipUsersMap[strings.ToLower(t.user)]; ok && t.user != prof.user {
 			continue
 		}
 

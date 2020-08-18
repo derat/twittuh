@@ -52,7 +52,8 @@ func TestE2E(t *testing.T) {
 		t.Fatalf("getTimeline(ft, %q, ...) failed: %v", user, err)
 	}
 	var out bytes.Buffer
-	if err := writeFeed(&out, jsonFormat, prof, tweets, latestID, false /* replies */); err != nil {
+	if err := writeFeed(&out, jsonFormat, prof, tweets, latestID,
+		false /* replies */, nil /* skipUsers */); err != nil {
 		t.Fatal("writeFeed(...) failed: ", err)
 	}
 	if *updateGolden {
