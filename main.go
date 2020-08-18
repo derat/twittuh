@@ -33,7 +33,7 @@ const (
 )
 
 const (
-	titleLen = 80 // max length of title text in feed
+	titleLen = 80 // max length of title text in feed, in runes
 
 	defaultMode os.FileMode = 0644 // default mode for new feed files
 )
@@ -228,8 +228,8 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 			Created:     t.time,
 			Content:     t.content,
 		}
-		if len(item.Title) > titleLen {
-			item.Title = item.Title[:titleLen-1] + "…"
+		if ut := []rune(item.Title); len(ut) > titleLen {
+			item.Title = string(ut[:titleLen-1]) + "…"
 		}
 		feed.Add(item)
 	}
