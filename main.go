@@ -226,6 +226,7 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 			Author:      &feeds.Author{Name: t.displayName()},
 			Id:          fmt.Sprintf("%v", t.id),
 			Created:     t.time,
+			Updated:     t.time,
 			Content:     t.content,
 		}
 		if ut := []rune(item.Title); len(ut) > titleLen {
