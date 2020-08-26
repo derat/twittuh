@@ -192,10 +192,15 @@ var durationRegexp = regexp.MustCompile(`^(\d+)([smh])$`)
 
 // parseTime parses a Twitter-supplied "timestamp".
 // These can take a variety of forms:
+//   - "now" if very recent
 //   - "23m" or "2h" if within the last 24 hours
 //   - "Jul 9" if within the last year
 //   - "25 Jun 19" if more than a year old (i.e. day-of-month first)
 func parseTime(s string, now time.Time) (time.Time, error) {
+	if s == "now" {
+		return now, nil
+	}
+
 	if ms := durationRegexp.FindStringSubmatch(s); ms != nil {
 		quant, err := strconv.Atoi(ms[1])
 		if err != nil {
