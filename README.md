@@ -31,6 +31,10 @@ Flags:
         Timeline pages to request (20 tweets/replies per page) (default 3)
   -replies
         Include the user's replies
+  -skip-users string
+        Comma-separated users whose tweets should be skipped
+  -user-agent string
+        User-Agent header to include in HTTP requests
   -verbose
         Enable verbose logging
 ```
