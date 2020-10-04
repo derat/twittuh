@@ -336,18 +336,28 @@ func getImageURL(url string, ft *fetcher) (string, error) {
 	}
 }
 
+var statusRegexp = regexp.MustCompile(`/status/(\d+)`)
+
 // getTweetContent attempts to extract the main content from the supplied tweet URL,
 // e.g. "https://twitter.com/biff_tannen/status/12813232543132445323". If the URL is
 // not a tweet page, nil is returned.
 func getTweetContent(url string, ft *fetcher) (*html.Node, error) {
-	if url = mobileURL(url); !strings.Contains(url, "/status/") {
+	// Extract the tweet's ID from the URL. If it's a reply, there will be multiple
+	// tweet-content divs on the page, and we want to get the correct one.
+	matches := statusRegexp.FindStringSubmatch(url)
+	if matches == nil {
+		return nil, nil
+	}
+	id := matches[1]
+
+	if url = mobileURL(url); url == "" {
 		return nil, nil
 	} else if b, err := ft.fetch(url, true /* useCache */); err != nil {
 		return nil, fmt.Errorf("couldn't fetch %v: %v", url, err)
 	} else if root, err := html.Parse(bytes.NewReader(b)); err != nil {
 		return nil, fmt.Errorf("couldn't parse %v: %v", url, err)
-	} else if divs := findNodes(root, matchFunc("div", "class=tweet-text")); len(divs) == 0 {
-		return nil, fmt.Errorf("didn't find content in %v", url)
+	} else if divs := findNodes(root, matchFunc("div", "class=tweet-text", "data-id="+id)); len(divs) == 0 {
+		return nil, fmt.Errorf("didn't find tweet %v in %v", id, url)
 	} else {
 		div := divs[0]
 		div.Parent.RemoveChild(div) // need to remove before adding to different tree
