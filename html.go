@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// findNodes returns node within the tree rooted at n for which f returns true.
+// findNodes returns all nodes within the tree rooted at n for which f returns true.
 func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 	var ns []*html.Node
 
@@ -21,6 +21,19 @@ func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 		ns = append(ns, findNodes(c, f)...)
 	}
 	return ns
+}
+
+// findFirstNode performs a DFS on n, returning the first node for which f returns true.
+func findFirstNode(n *html.Node, f func(*html.Node) bool) *html.Node {
+	if f(n) {
+		return n
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if m := findFirstNode(c, f); m != nil {
+			return m
+		}
+	}
+	return nil
 }
 
 // matchFunc is a convenient shorthand that returns a function that can be passed to findNodes.
@@ -66,7 +79,7 @@ func matchFunc(tag string, exprs ...string) func(n *html.Node) bool {
 
 // isElement returns true if n is an HTML element with the supplied tag type.
 func isElement(n *html.Node, tag string) bool {
-	return n.Type == html.ElementNode && n.Data == tag
+	return n != nil && n.Type == html.ElementNode && n.Data == tag
 }
 
 // hasClass returns true if n's "class" attribute contains class.
@@ -90,8 +103,27 @@ func getAttr(n *html.Node, attr string) string {
 	return ""
 }
 
+// deleteAttr recursively deletes attr from n and its descendents.
+func deleteAttr(n *html.Node, attr string) {
+	i := 0
+	for _, a := range n.Attr {
+		if a.Key != attr {
+			n.Attr[i] = a
+			i++
+		}
+	}
+	n.Attr = n.Attr[:i]
+
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		deleteAttr(c, attr)
+	}
+}
+
 // getText concatenates all text content in and under n.
 func getText(n *html.Node) string {
+	if n == nil {
+		return ""
+	}
 	var text string
 	if n.Type == html.TextNode {
 		text += n.Data

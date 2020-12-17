@@ -5,7 +5,7 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -19,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/chromedp/chromedp"
 
 	"github.com/gorilla/feeds"
 )
@@ -47,28 +49,20 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
-	cacheDir := flag.String("cache-dir", filepath.Join(os.Getenv("HOME"), ".cache/twittuh"), "Directory for caching downloads")
+	browserSize := flag.String("browser-size", "1024x8192", "Browser viewport size")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
-	embeds := flag.Bool("embeds", true, "Rewrite tweets to include embedded images and tweets")
-	force := flag.Bool("force", false, "Download and write feed even if there are no new tweets")
+	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
+	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
-	pages := flag.Int("pages", 3, "Timeline pages to request (20 tweets/replies per page)")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
-	userAgent := flag.String("user-agent", "", "User-Agent header to include in HTTP requests")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
-	ft, err := newFetcher(*cacheDir)
-	if err != nil {
-		log.Fatal("Failed initializing fetcher: ", err)
-	}
-	if *userAgent != "" {
-		ft.userAgent = *userAgent
-	}
+	ctx := context.Background()
 
 	if *debugFile != "" {
-		if err := debugParse(ft, *debugFile, *replies, *embeds); err != nil {
+		if err := debugParse(*debugFile, *replies); err != nil {
 			log.Fatal("Failed reading timeline: ", err)
 		}
 		os.Exit(0)
@@ -82,7 +76,18 @@ func main() {
 	feedPath := flag.Arg(1)
 	format := feedFormat(*formatFlag)
 
+	ps := strings.Split(*browserSize, "x")
+	if len(ps) != 2 {
+		log.Fatalf("Bad browser size %q", *browserSize)
+	}
+	width, werr := strconv.Atoi(ps[0])
+	height, herr := strconv.Atoi(ps[1])
+	if werr != nil || herr != nil {
+		log.Fatalf("Bad browser size %q", *browserSize)
+	}
+
 	var oldLatestID int64
+	var err error
 	if !*force {
 		if oldLatestID, err = getLatestID(feedPath, format); err != nil {
 			log.Printf("Couldn't get old latest ID from %v: %v", feedPath, err)
@@ -90,14 +95,30 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old latest ID %v", user, oldLatestID)
-	prof, tweets, latestID, err := getTimeline(ft, user, oldLatestID, *pages, *embeds, false /* cache */)
-	if err == errUnchanged {
-		debug("No new tweets; exiting without writing feed")
-		os.Exit(0)
-	} else if err != nil {
-		log.Fatalf("Failed getting tweets for %v: %v", user, err)
+	dom, err := fetchTimeline(ctx, user, width, height)
+	if err != nil {
+		log.Fatalf("Failed fetching timeline for %v: %v", user, err)
+	}
+	if *dumpDOM {
+		os.Stdout.WriteString(dom)
+	}
+	prof, tweets, err := parseTimeline(strings.NewReader(dom))
+	if err != nil {
+		log.Fatalf("Failed parsing timeline for %v: %v", user, err)
 	} else if len(tweets) == 0 {
 		log.Fatalf("No tweets found for %v", user)
+	}
+	debugf("Parsed %v tweet(s)", len(tweets))
+
+	var latestID int64
+	for _, tw := range tweets {
+		if tw.id > latestID {
+			latestID = tw.id
+		}
+	}
+	if latestID == oldLatestID {
+		debug("No new tweets; exiting without writing feed")
+		os.Exit(0)
 	}
 
 	// Write to a temp file and then replace the feed atomically to preserve the old version if
@@ -127,59 +148,20 @@ func main() {
 	}
 }
 
-var (
-	errUnchanged = errors.New("no new tweets")
-)
+// fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
+func fetchTimeline(ctx context.Context, user string, width, height int) (string, error) {
+	ctx, cancel := chromedp.NewContext(ctx)
+	defer cancel()
 
-// getTweets downloads and returns tweets from the supplied user's timeline.
-// The specified number of pages are downloaded. Each page appears to include
-// 20 tweets (or replies).
-//
-// If the ID of the latest tweet matches oldLatestID, errUnchanged is returned
-// alongside an empty slice. This indicates that no new Tweets are present.
-func getTimeline(ft *fetcher, user string, oldLatestID int64, pages int,
-	embeds, cache bool) (prof profile, tweets []tweet, latestID int64, err error) {
-	seenIDs := make(map[int64]struct{})
-	baseURL := mobileURL(userURL(user))
-	url := baseURL
-	for np := 0; np < pages; np++ {
-		b, err := ft.fetch(url, cache)
-		if err != nil {
-			return prof, tweets, 0, err
-		}
-		var newTweets []tweet
-		var nextURL string
-		if prof, newTweets, nextURL, err = parse(bytes.NewReader(b), ft, embeds); err != nil {
-			return prof, tweets, latestID, err
-		} else if len(newTweets) == 0 { // Went past the beginning of the feed?
-			return prof, tweets, latestID, nil
-		}
-
-		if np == 0 {
-			latestID = newTweets[0].id
-			// Bail out early if there are no new tweets.
-			if latestID == oldLatestID {
-				return prof, tweets, latestID, errUnchanged
-			}
-		}
-
-		for _, t := range newTweets {
-			// Because of the way that retweets are mixed in, we might get overlapping ranges of
-			// tweets in subsequent requests.
-			if _, ok := seenIDs[t.id]; !ok {
-				tweets = append(tweets, t)
-				seenIDs[t.id] = struct{}{}
-			}
-		}
-
-		if nextURL == "" {
-			break // reached the beginning of the timeline?
-		}
-		url = nextURL
-	}
-
-	debugf("Parsed %v tweet(s)", len(tweets))
-	return prof, tweets, latestID, nil
+	// TODO: Is it necessary to wait longer?
+	var data string
+	err := chromedp.Run(ctx,
+		chromedp.EmulateViewport(int64(width), int64(height)),
+		chromedp.Navigate(userURL(user)),
+		chromedp.WaitVisible(`div[data-testid="tweet"]`),
+		chromedp.Evaluate(`document.documentElement.outerHTML`, &data),
+	)
+	return data, err
 }
 
 // writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
@@ -298,14 +280,14 @@ func getLatestID(p string, format feedFormat) (int64, error) {
 }
 
 // debugParse reads an HTML timeline from p and dumps its tweets to stdout.
-func debugParse(ft *fetcher, p string, replies, embeds bool) error {
+func debugParse(p string, replies bool) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	prof, tweets, _, err := parse(f, ft, embeds)
+	prof, tweets, err := parseTimeline(f)
 	if err != nil {
 		return err
 	}
