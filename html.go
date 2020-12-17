@@ -10,15 +10,16 @@ import (
 	"golang.org/x/net/html"
 )
 
-// findNodes returns all nodes within the tree rooted at n for which f returns true.
+// findNodes returns nodes within the tree rooted at n for which f returns true.
+// After a node is matched, its children are not examined.
 func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 	var ns []*html.Node
-
 	if f(n) {
 		ns = append(ns, n)
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		ns = append(ns, findNodes(c, f)...)
+	} else {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			ns = append(ns, findNodes(c, f)...)
+		}
 	}
 	return ns
 }

@@ -71,10 +71,16 @@ func parseTimeline(r io.Reader) (profile, []tweet, error) {
 	}
 
 	var tweets []tweet
-	for _, tn := range findNodes(col, matchFunc("div", "data-testid=tweet")) {
+	for i, tn := range findNodes(col, matchFunc("div", "data-testid=tweet")) {
 		tw, err := parseTweet(tn)
 		if err != nil {
-			return prof, nil, fmt.Errorf("failed parsing tweet %d", tw.id)
+			var id string
+			if tw.id > 0 {
+				id = fmt.Sprintf("%d", tw.id)
+			} else {
+				id = fmt.Sprintf("at index %d", i)
+			}
+			return prof, nil, fmt.Errorf("failed parsing tweet %s: %v", id, err)
 		}
 		tweets = append(tweets, tw)
 	}
@@ -227,7 +233,7 @@ func parseTweet(n *html.Node) (tweet, error) {
 		return tw, fmt.Errorf("failed rendering text: %v", err)
 	}
 	tw.content = b.String()
-	tw.text = getText(content)
+	tw.text = getText(content) // TODO: Delete newlines?
 
 	return tw, nil
 }
