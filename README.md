@@ -42,6 +42,8 @@ Creates an RSS feed from a Twitter user's timeline.
 Flags:
   -browser-size string
         Browser viewport size (default "1024x8192")
+  -debug-chrome
+        Log noisy Chrome debug messages
   -debug-file string
         HTML timeline file to parse for debugging
   -dump-dom
@@ -50,10 +52,14 @@ Flags:
         Write feed even if there are no new tweets
   -format string
         Feed format to write ("atom", "json", "rss") (default "atom")
+  -proxy string
+        Optional proxy server (e.g. "socks5://localhost:9050")
   -replies
         Include the user's replies
   -skip-users string
         Comma-separated users whose tweets should be skipped
+  -timeout int
+        Chrome timeout in seconds
   -verbose
         Enable verbose logging
 ```

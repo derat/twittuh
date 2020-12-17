@@ -55,6 +55,7 @@ func main() {
 	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
 	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
+	proxy := flag.String("proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	timeout := flag.Int("timeout", 0, "Chrome timeout in seconds")
@@ -62,11 +63,11 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	cancel := func() {}
 	if *timeout > 0 {
+		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(*timeout)*time.Second)
+		defer cancel()
 	}
-	defer cancel()
 
 	if *debugFile != "" {
 		if err := debugParse(*debugFile, *replies); err != nil {
@@ -102,7 +103,7 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old latest ID %v", user, oldLatestID)
-	dom, err := fetchTimeline(ctx, user, width, height, *debugChrome)
+	dom, err := fetchTimeline(ctx, user, width, height, *proxy, *debugChrome)
 	if err != nil {
 		log.Fatalf("Failed fetching timeline for %v: %v", user, err)
 	}
@@ -156,7 +157,15 @@ func main() {
 }
 
 // fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
-func fetchTimeline(ctx context.Context, user string, width, height int, debug bool) (string, error) {
+func fetchTimeline(ctx context.Context, user string, width, height int,
+	proxy string, debug bool) (string, error) {
+	if proxy != "" {
+		var cancel context.CancelFunc
+		ctx, cancel = chromedp.NewExecAllocator(ctx,
+			append(chromedp.DefaultExecAllocatorOptions[:], chromedp.ProxyServer(proxy))...)
+		defer cancel()
+	}
+
 	copts := []chromedp.ContextOption{
 		chromedp.WithLogf(log.Printf),
 		chromedp.WithErrorf(log.Printf),
