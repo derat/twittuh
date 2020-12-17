@@ -53,21 +53,17 @@ func main() {
 	debugChrome := flag.Bool("debug-chrome", false, "Log noisy Chrome debug messages")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
 	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
+	fetchRetries := flag.Int("fetch-retries", 0, "Number of times to retry fetching")
+	fetchTimeout := flag.Int("fetch-timeout", 0, "Fetch timeout in seconds")
 	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	proxy := flag.String("proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
-	timeout := flag.Int("timeout", 0, "Chrome timeout in seconds")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
 	ctx := context.Background()
-	if *timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(*timeout)*time.Second)
-		defer cancel()
-	}
 
 	if *debugFile != "" {
 		if err := debugParse(*debugFile, *replies); err != nil {
@@ -103,13 +99,30 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old latest ID %v", user, oldLatestID)
-	dom, err := fetchTimeline(ctx, user, width, height, *proxy, *debugChrome)
-	if err != nil {
-		log.Fatalf("Failed fetching timeline for %v: %v", user, err)
+	var dom string
+	var attempts int
+	for {
+		cctx := ctx
+		if *fetchTimeout > 0 {
+			var cancel context.CancelFunc
+			cctx, cancel = context.WithTimeout(cctx, time.Duration(*fetchTimeout)*time.Second)
+			defer cancel()
+		}
+		attempts++
+		if dom, err = fetchTimeline(cctx, user, width, height, *proxy, *debugChrome); err == nil {
+			break
+		} else {
+			if attempts > *fetchRetries {
+				log.Fatalf("Failed fetching timeline for %v: %v", user, err)
+			} else {
+				debugf("Fetching timeline failed; trying again: %v", err)
+			}
+		}
 	}
 	if *dumpDOM {
 		os.Stdout.WriteString(dom)
 	}
+
 	prof, tweets, err := parseTimeline(strings.NewReader(dom))
 	if err != nil {
 		log.Fatalf("Failed parsing timeline for %v: %v", user, err)

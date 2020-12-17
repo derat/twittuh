@@ -48,6 +48,10 @@ Flags:
         HTML timeline file to parse for debugging
   -dump-dom
         Dump the timeline DOM to stdout for debugging
+  -fetch-retries int
+        Number of times to retry fetching
+  -fetch-timeout int
+        Fetch timeout in seconds
   -force
         Write feed even if there are no new tweets
   -format string
@@ -58,8 +62,6 @@ Flags:
         Include the user's replies
   -skip-users string
         Comma-separated users whose tweets should be skipped
-  -timeout int
-        Chrome timeout in seconds
   -verbose
         Enable verbose logging
 ```
