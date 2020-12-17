@@ -50,16 +50,23 @@ func main() {
 		flag.PrintDefaults()
 	}
 	browserSize := flag.String("browser-size", "1024x8192", "Browser viewport size")
+	debugChrome := flag.Bool("debug-chrome", false, "Log noisy Chrome debug messages")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
 	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
 	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
+	timeout := flag.Int("timeout", 0, "Chrome timeout in seconds")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
 	ctx := context.Background()
+	cancel := func() {}
+	if *timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(*timeout)*time.Second)
+	}
+	defer cancel()
 
 	if *debugFile != "" {
 		if err := debugParse(*debugFile, *replies); err != nil {
@@ -95,7 +102,7 @@ func main() {
 	}
 
 	debugf("Getting timeline for %v with old latest ID %v", user, oldLatestID)
-	dom, err := fetchTimeline(ctx, user, width, height)
+	dom, err := fetchTimeline(ctx, user, width, height, *debugChrome)
 	if err != nil {
 		log.Fatalf("Failed fetching timeline for %v: %v", user, err)
 	}
@@ -149,8 +156,15 @@ func main() {
 }
 
 // fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
-func fetchTimeline(ctx context.Context, user string, width, height int) (string, error) {
-	ctx, cancel := chromedp.NewContext(ctx)
+func fetchTimeline(ctx context.Context, user string, width, height int, debug bool) (string, error) {
+	copts := []chromedp.ContextOption{
+		chromedp.WithLogf(log.Printf),
+		chromedp.WithErrorf(log.Printf),
+	}
+	if debug {
+		copts = append(copts, chromedp.WithDebugf(log.Printf))
+	}
+	ctx, cancel := chromedp.NewContext(ctx, copts...)
 	defer cancel()
 
 	// TODO: Is it necessary to wait longer?
