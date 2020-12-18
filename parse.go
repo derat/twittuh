@@ -242,6 +242,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	}
 
 	deleteAttr(content, "class")
+	removeUnplayableVideos(content)
 	rewriteRelativeLinks(content)
 	inlineUserLinks(content)
 	addLineBreaks(content)
@@ -346,5 +347,15 @@ func cleanEmbed(n *html.Node) {
 		}); n != nil {
 			n.Data = ""
 		}
+	}
+
+}
+
+// removeUnplayableVideos removes all <video> elements under n using "blob:" URLs.
+func removeUnplayableVideos(n *html.Node) {
+	for _, v := range findNodes(n, func(n *html.Node) bool {
+		return isElement(n, "video") && strings.HasPrefix(getAttr(n, "src"), "blob:")
+	}) {
+		v.Parent.RemoveChild(v)
 	}
 }
