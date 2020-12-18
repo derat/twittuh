@@ -321,11 +321,24 @@ func cleanEmbed(n *html.Node) {
 		// Just merge all the text so it isn't spread across multiple divs.
 		div := tn.Parent.Parent.Parent
 		s := getText(div, true)
+
+		// Find the profile image and detach it so we can add it later.
+		img := findFirstNode(div, func(n *html.Node) bool {
+			return isElement(n, "img") && strings.Contains(getAttr(n, "src"), "/profile_images/")
+		})
+		if img != nil {
+			img.Parent.RemoveChild(img)
+		}
+
 		for div.FirstChild != nil {
 			div.RemoveChild(div.FirstChild)
 		}
-		div.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"})
-		div.FirstChild.AppendChild(&html.Node{Type: html.TextNode, Data: s})
+		if img != nil {
+			div.AppendChild(img)
+		}
+		bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
+		bold.AppendChild(&html.Node{Type: html.TextNode, Data: s})
+		div.AppendChild(bold)
 
 		// Also get rid of the useless "Quote Tweet" text.
 		if n := findFirstNode(n, func(n *html.Node) bool {
