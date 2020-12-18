@@ -63,14 +63,18 @@ func TestFindNodes(t *testing.T) {
 
 func TestGetText(t *testing.T) {
 	const (
-		markup = "<html><body> a <div>b\nc<span> e <br/>f </span> g</div> h </body></html>"
-		want   = " a b\nc e f  g h "
+		markup    = "<html><body> a <div>b\nc<span> e <br/>f </span> g</div> h </body></html>"
+		want      = " a b\nc e f  g h "
+		wantSpace = "a b\nc e f g h"
 	)
 	root, err := html.Parse(strings.NewReader(markup))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := getText(root); got != want {
-		t.Errorf("getText(%q) = %q; want %q", markup, got, want)
+	if got := getText(root, false); got != want {
+		t.Errorf("getText(%q, false) = %q; want %q", markup, got, want)
+	}
+	if got := getText(root, true); got != wantSpace {
+		t.Errorf("getText(%q, true) = %q; want %q", markup, got, wantSpace)
 	}
 }
