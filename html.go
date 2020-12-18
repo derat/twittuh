@@ -121,16 +121,29 @@ func deleteAttr(n *html.Node, attr string) {
 }
 
 // getText concatenates all text content in and under n.
-func getText(n *html.Node) string {
+func getText(n *html.Node, addSpaces bool) string {
 	if n == nil {
 		return ""
 	}
 	var text string
 	if n.Type == html.TextNode {
-		text += n.Data
+		text = n.Data
+		if addSpaces {
+			text = strings.TrimSpace(text)
+		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		text += getText(c)
+		s := getText(c, addSpaces)
+		if addSpaces {
+			if s = strings.TrimSpace(s); s != "" {
+				if text != "" {
+					text += " "
+				}
+				text += s
+			}
+		} else {
+			text += s
+		}
 	}
 	return text
 }

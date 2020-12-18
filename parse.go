@@ -107,7 +107,7 @@ func parseProfile(n *html.Node) (profile, error) {
 	if un.Parent == nil || un.Parent.Parent == nil || un.Parent.Parent.Parent == nil {
 		return pr, errors.New("didn't find full name")
 	}
-	pr.name = getText(un.Parent.Parent.Parent.PrevSibling)
+	pr.name = getText(un.Parent.Parent.Parent.PrevSibling, false)
 
 	img := findFirstNode(n, func(n *html.Node) bool {
 		return isElement(n, "img") && strings.Contains(getAttr(n, "src"), "/profile_images/")
@@ -176,11 +176,10 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	tw.user = un.Data[1:]
 
 	// The full name lives in a sibling of the username text node's great-grandparent.
-	// Twitter seems to serve Emoji as images here, so we unfortunately don't get them.
 	if un.Parent == nil || un.Parent.Parent == nil || un.Parent.Parent.Parent == nil {
 		return tw, errors.New("didn't find full name")
 	}
-	tw.name = getText(un.Parent.Parent.Parent.PrevSibling)
+	tw.name = getText(un.Parent.Parent.Parent.PrevSibling, false)
 
 	body := head.NextSibling
 	if body == nil {
@@ -225,7 +224,9 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 			Attr:     []html.Attribute{{Key: "href", Val: tw.href}},
 		}
 		link.AppendChild(&html.Node{Type: html.TextNode, Data: fmt.Sprintf("%s (@%s)", tw.name, tw.user)})
-		content.AppendChild(link)
+		bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
+		bold.AppendChild(link)
+		content.AppendChild(bold)
 		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Br, Data: "br"})
 	}
 
@@ -234,7 +235,9 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 
 	if embed.FirstChild != nil {
 		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Hr, Data: "hr"})
+		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Br, Data: "br"})
 		body.RemoveChild(embed)
+		cleanEmbed(embed)
 		content.AppendChild(embed)
 	}
 
@@ -248,7 +251,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 		return tw, fmt.Errorf("failed rendering text: %v", err)
 	}
 	tw.content = b.String()
-	tw.text = getText(content)
+	tw.text = getText(content, true)
 
 	return tw, nil
 }
@@ -305,5 +308,30 @@ func inlineUserLinks(n *html.Node) {
 		div := link.Parent.Parent
 		div.Data = "span"
 		div.DataAtom = atom.Span
+	}
+}
+
+// cleanEmbed looks for something that looks like quoted tweet header in n, an embed.
+// If it finds one, it replaces it with a single text node containing its text contents.
+func cleanEmbed(n *html.Node) {
+	// Look for a timestamp to try to identify a quoted tweet header.
+	if tn := findFirstNode(n, matchFunc("time")); tn != nil && isElement(tn.Parent, "span") &&
+		isElement(tn.Parent.Parent, "div") && isElement(tn.Parent.Parent.Parent, "div") {
+		// It looks like Twitter doesn't give us the link to the quoted tweet, unfortunately.
+		// Just merge all the text so it isn't spread across multiple divs.
+		div := tn.Parent.Parent.Parent
+		s := getText(div, true)
+		for div.FirstChild != nil {
+			div.RemoveChild(div.FirstChild)
+		}
+		div.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"})
+		div.FirstChild.AppendChild(&html.Node{Type: html.TextNode, Data: s})
+
+		// Also get rid of the useless "Quote Tweet" text.
+		if n := findFirstNode(n, func(n *html.Node) bool {
+			return n.Type == html.TextNode && n.Data == "Quote Tweet"
+		}); n != nil {
+			n.Data = ""
+		}
 	}
 }
