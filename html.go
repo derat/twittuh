@@ -83,6 +83,11 @@ func isElement(n *html.Node, tag string) bool {
 	return n != nil && n.Type == html.ElementNode && n.Data == tag
 }
 
+// isText returns true if n is a text node.
+func isText(n *html.Node) bool {
+	return n != nil && n.Type == html.TextNode
+}
+
 // hasClass returns true if n's "class" attribute contains class.
 func hasClass(n *html.Node, class string) bool {
 	for _, v := range strings.Fields(getAttr(n, "class")) {

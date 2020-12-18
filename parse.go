@@ -97,7 +97,7 @@ func parseProfile(n *html.Node) (profile, error) {
 
 	// TODO: Should check that the username matches, but we don't pass it in.
 	un := findFirstNode(n, func(n *html.Node) bool {
-		return n.Type == html.TextNode && len(n.Data) > 1 && n.Data[0] == '@'
+		return isText(n) && len(n.Data) > 1 && n.Data[0] == '@'
 	})
 	if un == nil {
 		return pr, errors.New("didn't find username")
@@ -168,7 +168,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 
 	// Just look for the first text node starting with "@" to get the user.
 	un := findFirstNode(head, func(n *html.Node) bool {
-		return n.Type == html.TextNode && len(n.Data) > 1 && n.Data[0] == '@'
+		return isText(n) && len(n.Data) > 1 && n.Data[0] == '@'
 	})
 	if un == nil {
 		return tw, errors.New("didn't find username")
@@ -203,7 +203,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	case 4:
 		// Extract the replied-to users from the first child.
 		for _, n := range findNodes(children[0], func(n *html.Node) bool {
-			return n.Type == html.TextNode && len(n.Data) > 1 && n.Data[0] == '@'
+			return isText(n) && len(n.Data) > 1 && n.Data[0] == '@'
 		}) {
 			tw.replyUsers = append(tw.replyUsers, n.Data[1:])
 		}
@@ -237,7 +237,8 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Hr, Data: "hr"})
 		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Br, Data: "br"})
 		body.RemoveChild(embed)
-		cleanEmbed(embed)
+		improveQuoteTweetHeader(embed)
+		improveLinkCard(embed)
 		content.AppendChild(embed)
 	}
 
@@ -260,7 +261,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 // addLineBreaks splits text nodes under n on newlines and inserts <br> tags.
 func addLineBreaks(n *html.Node) {
 	for _, tn := range findNodes(n, func(n *html.Node) bool {
-		return n.Type == html.TextNode && strings.Contains(n.Data, "\n")
+		return isText(n) && strings.Contains(n.Data, "\n")
 	}) {
 		parent := tn.Parent
 		next := tn.NextSibling
@@ -302,7 +303,7 @@ func inlineUserLinks(n *html.Node) {
 	for _, link := range findNodes(n, func(n *html.Node) bool {
 		// Match links containing a single text node with a username in it.
 		return isElement(n, "a") &&
-			n.FirstChild != nil && n.FirstChild == n.LastChild && n.FirstChild.Type == html.TextNode &&
+			n.FirstChild != nil && n.FirstChild == n.LastChild && isText(n.FirstChild) &&
 			strings.HasPrefix(n.FirstChild.Data, "@") && !strings.Contains(n.FirstChild.Data, " ") &&
 			isElement(n.Parent, "span") && isElement(n.Parent.Parent, "div")
 	}) {
@@ -312,43 +313,79 @@ func inlineUserLinks(n *html.Node) {
 	}
 }
 
-// cleanEmbed looks for something that looks like quoted tweet header in n, an embed.
+// improveQuoteTweetHeader looks for a quoted tweet header in n, an embed.
 // If it finds one, it replaces it with a single text node containing its text contents.
-func cleanEmbed(n *html.Node) {
+func improveQuoteTweetHeader(n *html.Node) {
 	// Look for a timestamp to try to identify a quoted tweet header.
-	if tn := findFirstNode(n, matchFunc("time")); tn != nil && isElement(tn.Parent, "span") &&
-		isElement(tn.Parent.Parent, "div") && isElement(tn.Parent.Parent.Parent, "div") {
-		// It looks like Twitter doesn't give us the link to the quoted tweet, unfortunately.
-		// Just merge all the text so it isn't spread across multiple divs.
-		div := tn.Parent.Parent.Parent
-		s := getText(div, true)
-
-		// Find the profile image and detach it so we can add it later.
-		img := findFirstNode(div, func(n *html.Node) bool {
-			return isElement(n, "img") && strings.Contains(getAttr(n, "src"), "/profile_images/")
-		})
-		if img != nil {
-			img.Parent.RemoveChild(img)
-		}
-
-		for div.FirstChild != nil {
-			div.RemoveChild(div.FirstChild)
-		}
-		if img != nil {
-			div.AppendChild(img)
-		}
-		bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
-		bold.AppendChild(&html.Node{Type: html.TextNode, Data: s})
-		div.AppendChild(bold)
-
-		// Also get rid of the useless "Quote Tweet" text.
-		if n := findFirstNode(n, func(n *html.Node) bool {
-			return n.Type == html.TextNode && n.Data == "Quote Tweet"
-		}); n != nil {
-			n.Data = ""
-		}
+	tn := findFirstNode(n, matchFunc("time"))
+	if tn == nil || !isElement(tn.Parent, "span") || !!isElement(tn.Parent.Parent, "div") ||
+		!isElement(tn.Parent.Parent.Parent, "div") {
+		return
 	}
 
+	// It looks like Twitter doesn't give us the link to the quoted tweet, unfortunately.
+	// Just merge all the text so it isn't spread across multiple divs. Prepend a space so
+	// the it won't be flush against the profile image -- Feedly strips most (all?) styling.
+	div := tn.Parent.Parent.Parent
+	s := " " + getText(div, true)
+
+	// Find the profile image and detach it so we can add it later.
+	img := findFirstNode(div, func(n *html.Node) bool {
+		return isElement(n, "img") && strings.Contains(getAttr(n, "src"), "/profile_images/")
+	})
+	if img != nil {
+		img.Parent.RemoveChild(img)
+	}
+
+	for div.FirstChild != nil {
+		div.RemoveChild(div.FirstChild)
+	}
+	if img != nil {
+		div.AppendChild(img)
+	}
+	bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
+	bold.AppendChild(&html.Node{Type: html.TextNode, Data: s})
+	div.AppendChild(bold)
+
+	// Also get rid of the useless "Quote Tweet" text.
+	if n := findFirstNode(n, func(n *html.Node) bool {
+		return isText(n) && n.Data == "Quote Tweet"
+	}); n != nil {
+		n.Data = ""
+	}
+}
+
+// improveLinkCard looks for a link card in n and improves its styling.
+func improveLinkCard(n *html.Node) {
+	cn := findFirstNode(n, matchFunc("div", "data-testid=card.layoutLarge.detail"))
+	if cn == nil {
+		return
+	}
+
+	// Cards appear to contain three div children: a title, description, and domain.
+	var children []*html.Node
+	for n := cn.FirstChild; n != nil; n = n.NextSibling {
+		children = append(children, n)
+	}
+	if len(children) != 3 {
+		return
+	}
+
+	// Reparent the title text under a <b> element.
+	if title := findFirstNode(children[0], isText); title != nil {
+		bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
+		title.Parent.InsertBefore(bold, title)
+		title.Parent.RemoveChild(title)
+		bold.AppendChild(title)
+	}
+
+	// Reparent the domain under an <i> element.
+	if domain := findFirstNode(children[2], isText); domain != nil {
+		italic := &html.Node{Type: html.ElementNode, DataAtom: atom.I, Data: "i"}
+		domain.Parent.InsertBefore(italic, domain)
+		domain.Parent.RemoveChild(domain)
+		italic.AppendChild(domain)
+	}
 }
 
 // removeUnplayableVideos removes all <video> elements under n using "blob:" URLs.
