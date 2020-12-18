@@ -226,6 +226,7 @@ func parseTweet(n *html.Node) (tweet, error) {
 
 	deleteAttr(content, "class")
 	rewriteRelativeLinks(content)
+	inlineUserLinks(content)
 	addLineBreaks(content)
 
 	var b bytes.Buffer
@@ -233,7 +234,7 @@ func parseTweet(n *html.Node) (tweet, error) {
 		return tw, fmt.Errorf("failed rendering text: %v", err)
 	}
 	tw.content = b.String()
-	tw.text = getText(content) // TODO: Delete newlines?
+	tw.text = getText(content)
 
 	return tw, nil
 }
@@ -275,5 +276,20 @@ func rewriteRelativeLinks(n *html.Node) {
 				link.Attr[i].Val = absoluteURL(a.Val)
 			}
 		}
+	}
+}
+
+// inlineUserLinks converts divs wrapping user links in a tweet into spans.
+func inlineUserLinks(n *html.Node) {
+	for _, link := range findNodes(n, func(n *html.Node) bool {
+		// Match links containing a single text node with a username in it.
+		return isElement(n, "a") &&
+			n.FirstChild != nil && n.FirstChild == n.LastChild && n.FirstChild.Type == html.TextNode &&
+			strings.HasPrefix(n.FirstChild.Data, "@") && !strings.Contains(n.FirstChild.Data, " ") &&
+			isElement(n.Parent, "span") && isElement(n.Parent.Parent, "div")
+	}) {
+		div := link.Parent.Parent
+		div.Data = "span"
+		div.DataAtom = atom.Span
 	}
 }
