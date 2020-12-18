@@ -72,7 +72,7 @@ func parseTimeline(r io.Reader) (profile, []tweet, error) {
 
 	var tweets []tweet
 	for i, tn := range findNodes(col, matchFunc("div", "data-testid=tweet")) {
-		tw, err := parseTweet(tn)
+		tw, err := parseTweet(tn, prof.user)
 		if err != nil {
 			var id string
 			if tw.id > 0 {
@@ -122,7 +122,7 @@ func parseProfile(n *html.Node) (profile, error) {
 }
 
 // parseTweet parses a single tweet from the supplied tweet div.
-func parseTweet(n *html.Node) (tweet, error) {
+func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	var tw tweet
 	if n.FirstChild == nil || n.FirstChild.NextSibling == nil {
 		return tw, errors.New("no right column")
@@ -215,6 +215,20 @@ func parseTweet(n *html.Node) (tweet, error) {
 	}
 
 	content := &html.Node{Type: html.ElementNode, DataAtom: atom.Div, Data: "div"}
+
+	// If this is a retweet, add an attribution link at the top.
+	if tw.user != timelineUser {
+		link := &html.Node{
+			Type:     html.ElementNode,
+			DataAtom: atom.A,
+			Data:     "a",
+			Attr:     []html.Attribute{{Key: "href", Val: tw.href}},
+		}
+		link.AppendChild(&html.Node{Type: html.TextNode, Data: fmt.Sprintf("%s (@%s)", tw.name, tw.user)})
+		content.AppendChild(link)
+		content.AppendChild(&html.Node{Type: html.ElementNode, DataAtom: atom.Br, Data: "br"})
+	}
+
 	body.RemoveChild(text)
 	content.AppendChild(text)
 
