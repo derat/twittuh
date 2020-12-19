@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chromedp/chromedp"
-
 	"github.com/gorilla/feeds"
 )
 
@@ -35,8 +33,7 @@ const (
 )
 
 const (
-	titleLen = 80 // max length of title text in feed, in runes
-
+	titleLen                = 80   // max length of title text in feed, in runes
 	defaultMode os.FileMode = 0644 // default mode for new feed files
 )
 
@@ -61,6 +58,7 @@ func main() {
 	proxy := flag.String("proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
+	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
@@ -103,14 +101,14 @@ func main() {
 	var dom string
 	var attempts int
 	for {
-		cctx := ctx
 		if *fetchTimeout > 0 {
 			var cancel context.CancelFunc
-			cctx, cancel = context.WithTimeout(cctx, time.Duration(*fetchTimeout)*time.Second)
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(*fetchTimeout)*time.Second)
 			defer cancel()
 		}
 		attempts++
-		if dom, err = fetchTimeline(cctx, user, width, height, *proxy, *cacheDir, *debugChrome); err == nil {
+		if dom, err = fetchTimeline(ctx, user, width, height, *proxy, *cacheDir,
+			time.Duration(*tweetTimeout)*time.Second, *debugChrome); err == nil {
 			break
 		} else {
 			if attempts > *fetchRetries {
@@ -168,40 +166,6 @@ func main() {
 	if err := os.Rename(f.Name(), feedPath); err != nil {
 		log.Fatal("Failed replacing feed file: ", err)
 	}
-}
-
-// fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
-func fetchTimeline(ctx context.Context, user string, width, height int,
-	proxy, cacheDir string, debug bool) (string, error) {
-	eopts := chromedp.DefaultExecAllocatorOptions[:]
-	if proxy != "" {
-		eopts = append(eopts, chromedp.ProxyServer(proxy))
-	}
-	if cacheDir != "" {
-		eopts = append(eopts, chromedp.Flag("disk-cache-dir", cacheDir))
-	}
-	ctx, cancel := chromedp.NewExecAllocator(ctx, eopts...)
-	defer cancel()
-
-	copts := []chromedp.ContextOption{
-		chromedp.WithLogf(log.Printf),
-		chromedp.WithErrorf(log.Printf),
-	}
-	if debug {
-		copts = append(copts, chromedp.WithDebugf(log.Printf))
-	}
-	ctx, cancel = chromedp.NewContext(ctx, copts...)
-	defer cancel()
-
-	// TODO: Is it necessary to wait longer?
-	var data string
-	err := chromedp.Run(ctx,
-		chromedp.EmulateViewport(int64(width), int64(height)),
-		chromedp.Navigate(userURL(user)),
-		chromedp.WaitVisible(`div[data-testid="tweet"]`),
-		chromedp.Evaluate(`document.documentElement.outerHTML`, &data),
-	)
-	return data, err
 }
 
 // writeFeed writes a feed in the supplied format containing tweets from a user's timeline.
