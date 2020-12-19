@@ -318,7 +318,7 @@ func inlineUserLinks(n *html.Node) {
 func improveQuoteTweetHeader(n *html.Node) {
 	// Look for a timestamp to try to identify a quoted tweet header.
 	tn := findFirstNode(n, matchFunc("time"))
-	if tn == nil || !isElement(tn.Parent, "span") || !!isElement(tn.Parent.Parent, "div") ||
+	if tn == nil || !isElement(tn.Parent, "span") || !isElement(tn.Parent.Parent, "div") ||
 		!isElement(tn.Parent.Parent.Parent, "div") {
 		return
 	}
