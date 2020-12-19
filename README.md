@@ -42,6 +42,8 @@ Creates an RSS feed from a Twitter user's timeline.
 Flags:
   -browser-size string
         Browser viewport size (default "1024x8192")
+  -cache-dir string
+        Chrome cache directory
   -debug-chrome
         Log noisy Chrome debug messages
   -debug-file string

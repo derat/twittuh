@@ -50,6 +50,7 @@ func main() {
 		flag.PrintDefaults()
 	}
 	browserSize := flag.String("browser-size", "1024x8192", "Browser viewport size")
+	cacheDir := flag.String("cache-dir", "", "Chrome cache directory")
 	debugChrome := flag.Bool("debug-chrome", false, "Log noisy Chrome debug messages")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
 	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
@@ -109,7 +110,7 @@ func main() {
 			defer cancel()
 		}
 		attempts++
-		if dom, err = fetchTimeline(cctx, user, width, height, *proxy, *debugChrome); err == nil {
+		if dom, err = fetchTimeline(cctx, user, width, height, *proxy, *cacheDir, *debugChrome); err == nil {
 			break
 		} else {
 			if attempts > *fetchRetries {
@@ -171,13 +172,16 @@ func main() {
 
 // fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
 func fetchTimeline(ctx context.Context, user string, width, height int,
-	proxy string, debug bool) (string, error) {
+	proxy, cacheDir string, debug bool) (string, error) {
+	eopts := chromedp.DefaultExecAllocatorOptions[:]
 	if proxy != "" {
-		var cancel context.CancelFunc
-		ctx, cancel = chromedp.NewExecAllocator(ctx,
-			append(chromedp.DefaultExecAllocatorOptions[:], chromedp.ProxyServer(proxy))...)
-		defer cancel()
+		eopts = append(eopts, chromedp.ProxyServer(proxy))
 	}
+	if cacheDir != "" {
+		eopts = append(eopts, chromedp.Flag("disk-cache-dir", cacheDir))
+	}
+	ctx, cancel := chromedp.NewExecAllocator(ctx, eopts...)
+	defer cancel()
 
 	copts := []chromedp.ContextOption{
 		chromedp.WithLogf(log.Printf),
@@ -186,7 +190,7 @@ func fetchTimeline(ctx context.Context, user string, width, height int,
 	if debug {
 		copts = append(copts, chromedp.WithDebugf(log.Printf))
 	}
-	ctx, cancel := chromedp.NewContext(ctx, copts...)
+	ctx, cancel = chromedp.NewContext(ctx, copts...)
 	defer cancel()
 
 	// TODO: Is it necessary to wait longer?
