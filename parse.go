@@ -347,9 +347,10 @@ func improveQuoteTweetHeader(n *html.Node) {
 	bold.AppendChild(&html.Node{Type: html.TextNode, Data: s})
 	div.AppendChild(bold)
 
-	// Also get rid of useless "Quote Tweet" and "Show this thread" text.
+	// Also get rid of useless text.
 	for _, n := range findNodes(n, func(n *html.Node) bool {
-		return isText(n) && (n.Data == "Quote Tweet" || n.Data == "Show this thread")
+		return isText(n) && (n.Data == "Quote Tweet" ||
+			n.Data == "Show this poll" || n.Data == "Show this thread")
 	}) {
 		n.Data = ""
 	}

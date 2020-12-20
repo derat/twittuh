@@ -64,6 +64,8 @@ Flags:
         Include the user's replies
   -skip-users string
         Comma-separated users whose tweets should be skipped
+  -tweet-timeout int
+        Timeout for loading tweets in seconds
   -verbose
         Enable verbose logging
 ```
