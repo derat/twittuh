@@ -243,7 +243,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	}
 
 	deleteAttr(content, "class")
-	removeUnplayableVideos(content)
+	fixVideos(content)
 	rewriteRelativeLinks(content)
 	inlineUserLinks(content)
 	addLineBreaks(content)
@@ -389,11 +389,15 @@ func improveLinkCard(n *html.Node) {
 	}
 }
 
-// removeUnplayableVideos removes all <video> elements under n using "blob:" URLs.
-func removeUnplayableVideos(n *html.Node) {
-	for _, v := range findNodes(n, func(n *html.Node) bool {
-		return isElement(n, "video") && strings.HasPrefix(getAttr(n, "src"), "blob:")
-	}) {
-		v.Parent.RemoveChild(v)
+// fixVideos tries to improve <video> elements under n, an embed.
+// Elements pointing to unplayable "blob:" URLs are removed.
+// The "controls" attribute is added to other elements.
+func fixVideos(n *html.Node) {
+	for _, v := range findNodes(n, matchFunc("video")) {
+		if strings.HasPrefix(getAttr(n, "src"), "blob:") {
+			v.Parent.RemoveChild(v)
+		} else {
+			v.Attr = append(v.Attr, html.Attribute{Key: "controls"})
+		}
 	}
 }
