@@ -40,6 +40,8 @@ const (
 var verbose = false // enable verbose logging
 
 func main() {
+	var fetchOpts fetchOptions
+
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <user> <file>\n", os.Args[0])
 		fmt.Fprintln(flag.CommandLine.Output(), "Creates an RSS feed from a Twitter user's timeline.")
@@ -47,15 +49,15 @@ func main() {
 		flag.PrintDefaults()
 	}
 	browserSize := flag.String("browser-size", "1024x8192", "Browser viewport size")
-	cacheDir := flag.String("cache-dir", "", "Chrome cache directory")
-	debugChrome := flag.Bool("debug-chrome", false, "Log noisy Chrome debug messages")
+	flag.StringVar(&fetchOpts.cacheDir, "cache-dir", "", "Chrome cache directory")
+	flag.BoolVar(&fetchOpts.logDebug, "debug-chrome", false, "Log noisy Chrome debug messages")
 	debugFile := flag.String("debug-file", "", "HTML timeline file to parse for debugging")
 	dumpDOM := flag.Bool("dump-dom", false, "Dump the timeline DOM to stdout for debugging")
 	fetchRetries := flag.Int("fetch-retries", 0, "Number of times to retry fetching")
 	fetchTimeout := flag.Int("fetch-timeout", 0, "Fetch timeout in seconds")
 	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
-	proxy := flag.String("proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
+	flag.StringVar(&fetchOpts.proxy, "proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
@@ -83,11 +85,14 @@ func main() {
 	if len(ps) != 2 {
 		log.Fatalf("Bad browser size %q", *browserSize)
 	}
-	width, werr := strconv.Atoi(ps[0])
-	height, herr := strconv.Atoi(ps[1])
+	var werr, herr error
+	fetchOpts.width, werr = strconv.Atoi(ps[0])
+	fetchOpts.height, herr = strconv.Atoi(ps[1])
 	if werr != nil || herr != nil {
 		log.Fatalf("Bad browser size %q", *browserSize)
 	}
+
+	fetchOpts.tweetTimeout = time.Duration(*tweetTimeout) * time.Second
 
 	var oldLatestID int64
 	var err error
@@ -107,8 +112,7 @@ func main() {
 			defer cancel()
 		}
 		attempts++
-		if dom, err = fetchTimeline(ctx, user, width, height, *proxy, *cacheDir,
-			time.Duration(*tweetTimeout)*time.Second, *debugChrome); err == nil {
+		if dom, err = fetchTimeline(ctx, user, fetchOpts); err == nil {
 			break
 		} else {
 			if attempts > *fetchRetries {
