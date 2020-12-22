@@ -394,7 +394,7 @@ func improveLinkCard(n *html.Node) {
 // The "controls" attribute is added to other elements.
 func fixVideos(n *html.Node) {
 	for _, v := range findNodes(n, matchFunc("video")) {
-		if strings.HasPrefix(getAttr(n, "src"), "blob:") {
+		if strings.HasPrefix(getAttr(v, "src"), "blob:") {
 			v.Parent.RemoveChild(v)
 		} else {
 			v.Attr = append(v.Attr, html.Attribute{Key: "controls"})
