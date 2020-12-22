@@ -390,14 +390,18 @@ func improveLinkCard(n *html.Node) {
 }
 
 // fixVideos tries to improve <video> elements under n, an embed.
-// Elements pointing to unplayable "blob:" URLs are removed.
-// The "controls" attribute is added to other elements.
+// The "controls" attribute is added to playable (i.e. non-blob) elements,
+// and <img> tags containing screenshots are removed.
 func fixVideos(n *html.Node) {
 	for _, v := range findNodes(n, matchFunc("video")) {
-		if strings.HasPrefix(getAttr(v, "src"), "blob:") {
-			v.Parent.RemoveChild(v)
-		} else {
+		src := getAttr(v, "src")
+		if !strings.HasPrefix(src, "blob:") {
 			v.Attr = append(v.Attr, html.Attribute{Key: "controls"})
+		}
+		if poster := getAttr(v, "poster"); poster != "" {
+			for _, img := range findNodes(n, matchFunc("img", "src="+poster)) {
+				img.Parent.RemoveChild(img)
+			}
 		}
 	}
 }
