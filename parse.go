@@ -358,7 +358,13 @@ func improveQuoteTweetHeader(n *html.Node) {
 
 // improveLinkCard looks for a link card in n and improves its styling.
 func improveLinkCard(n *html.Node) {
-	cn := findFirstNode(n, matchFunc("div", "data-testid=card.layoutLarge.detail"))
+	cn := findFirstNode(n, func(n *html.Node) bool {
+		if !isElement(n, "div") {
+			return false
+		}
+		id := getAttr(n, "data-testid")
+		return id == "card.layoutSmall.detail" || id == "card.layoutLarge.detail"
+	})
 	if cn == nil {
 		return
 	}
