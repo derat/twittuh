@@ -58,6 +58,8 @@ Flags:
         Write feed even if there are no new tweets
   -format string
         Feed format to write ("atom", "json", "rss") (default "atom")
+  -page-settle-delay int
+        Time to wait for page render in seconds (default 2)
   -proxy string
         Optional proxy server (e.g. "socks5://localhost:9050")
   -replies

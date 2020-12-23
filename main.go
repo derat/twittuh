@@ -58,6 +58,7 @@ func main() {
 	force := flag.Bool("force", false, "Write feed even if there are no new tweets")
 	formatFlag := flag.String("format", "atom", `Feed format to write ("atom", "json", "rss")`)
 	flag.StringVar(&fetchOpts.proxy, "proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
+	pageSettleDelay := flag.Int("page-settle-delay", 2, "Time to wait for page render in seconds")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
@@ -92,6 +93,7 @@ func main() {
 		log.Fatalf("Bad browser size %q", *browserSize)
 	}
 
+	fetchOpts.pageSettleDelay = time.Duration(*pageSettleDelay) * time.Second
 	fetchOpts.tweetTimeout = time.Duration(*tweetTimeout) * time.Second
 
 	var oldLatestID int64

@@ -15,14 +15,14 @@ import (
 
 const (
 	hasTweetExpr       = `!!document.querySelector('div[data-testid="tweet"]')`
-	hasTweetCheckDelay = time.Second     // time to sleep between running hasTweetExpr
-	pageSettleDelay    = 2 * time.Second // additional time to wait after tweets
+	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
 )
 
 type fetchOptions struct {
 	width, height   int
 	proxy, cacheDir string
 	tweetTimeout    time.Duration
+	pageSettleDelay time.Duration
 	logDebug        bool
 }
 
@@ -79,9 +79,9 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 
 	// This is a hack, but wait a bit longer after the first tweet shows up in the hope that
 	// additional content (e.g. more tweets and link cards in embeds) will appear.
-	if dl, ok := ctx.Deadline(); !ok || time.Now().Add(pageSettleDelay).Before(dl) {
+	if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.pageSettleDelay).Before(dl) {
 		debug("Waiting for page to settle")
-		time.Sleep(pageSettleDelay)
+		time.Sleep(opts.pageSettleDelay)
 	}
 
 	// Return the rendered DOM.
