@@ -131,7 +131,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 
 	// Replace annoying emoji divs with text nodes containing the emoji themselves.
 	for _, n := range findNodes(main, func(n *html.Node) bool {
-		return isElement(n, "div") && getAttr(n, "style") == "height: 1.2em;"
+		return isElement(n, "div") && getAttr(n, "style") == "height: 1.2em;" && getAttr(n, "aria-label") != ""
 	}) {
 		*n = html.Node{Type: html.TextNode, Data: getAttr(n, "aria-label")}
 	}
