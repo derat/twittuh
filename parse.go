@@ -20,38 +20,39 @@ import (
 )
 
 // profile contains information about a user.
+// Only marshaled to JSON for testing.
 type profile struct {
-	user  string // screen name (without '@')
-	name  string // full name
-	icon  string // small (48x48) favicon URL
-	image string // large (200x200 or 400x400) avatar URL
+	User  string `json:"user"`  // screen name (without '@')
+	Name  string `json:"name"`  // full name
+	Icon  string `json:"icon"`  // small (48x48) favicon URL
+	Image string `json:"image"` // large (200x200 or 400x400) avatar URL
 }
 
 func (p *profile) displayName() string {
-	return fmt.Sprintf("%s (@%s)", p.name, p.user)
+	return fmt.Sprintf("%s (@%s)", p.Name, p.User)
 }
 
 // tweet describes a single tweet.
+// Only marshaled to JSON for testing.
 type tweet struct {
-	id      int64
-	href    string    // absolute URL to tweet
-	user    string    // screen name (without '@')
-	name    string    // full name
-	time    time.Time // approximate (Twitter just gives us age)
-	content string    // HTML content
-	text    string    // text from content
-
-	replyUsers []string // empty if not reply (without '@')
+	ID         int64     `json:"id"`
+	Href       string    `json:"href"` // absolute URL to tweet
+	User       string    `json:"user"` // screen name (without '@')
+	Name       string    `json:"name"` // full name
+	Time       time.Time `json:"time"`
+	Content    string    `json:"content"`    // HTML content
+	Text       string    `json:"text"`       // text from content
+	ReplyUsers []string  `json:"replyUsers"` // empty if not reply (without '@')
 }
 
 func (t *tweet) displayName() string {
-	return fmt.Sprintf("%s (@%s)", t.name, t.user)
+	return fmt.Sprintf("%s (@%s)", t.Name, t.User)
 }
 
 func (t *tweet) reply() bool {
 	// For reasons that I don't understand, the first messages in threads sometimes show up as
 	// self-replies. It seems more sensible to treat these as non-replies.
-	return len(t.replyUsers) > 0 && (len(t.replyUsers) > 1 || t.replyUsers[0] != t.user)
+	return len(t.ReplyUsers) > 0 && (len(t.ReplyUsers) > 1 || t.ReplyUsers[0] != t.User)
 }
 
 // parseTimeline reads an HTML document containing a Twitter timeline from r and returns its tweets.
@@ -72,11 +73,11 @@ func parseTimeline(r io.Reader) (profile, []tweet, error) {
 
 	var tweets []tweet
 	for i, tn := range findNodes(col, matchFunc("div", "data-testid=tweet")) {
-		tw, err := parseTweet(tn, prof.user)
+		tw, err := parseTweet(tn, prof.User)
 		if err != nil {
 			var id string
-			if tw.id > 0 {
-				id = fmt.Sprintf("%d", tw.id)
+			if tw.ID > 0 {
+				id = fmt.Sprintf("%d", tw.ID)
 			} else {
 				id = fmt.Sprintf("at index %d", i)
 			}
@@ -102,12 +103,12 @@ func parseProfile(n *html.Node) (profile, error) {
 	if un == nil {
 		return pr, errors.New("didn't find username")
 	}
-	pr.user = un.Data[1:]
+	pr.User = un.Data[1:]
 
 	if un.Parent == nil || un.Parent.Parent == nil || un.Parent.Parent.Parent == nil {
 		return pr, errors.New("didn't find full name")
 	}
-	pr.name = getText(un.Parent.Parent.Parent.PrevSibling, false)
+	pr.Name = getText(un.Parent.Parent.Parent.PrevSibling, false)
 
 	img := findFirstNode(n, func(n *html.Node) bool {
 		return isElement(n, "img") && strings.Contains(getAttr(n, "src"), "/profile_images/")
@@ -115,8 +116,8 @@ func parseProfile(n *html.Node) (profile, error) {
 	if img == nil {
 		return pr, errors.New("didn't find profile image")
 	}
-	pr.image = imgSizeRegexp.ReplaceAllLiteralString(getAttr(img, "src"), "_400x400.jpg")
-	pr.icon = imgSizeRegexp.ReplaceAllLiteralString(pr.image, "_normal.jpg")
+	pr.Image = imgSizeRegexp.ReplaceAllLiteralString(getAttr(img, "src"), "_400x400.jpg")
+	pr.Icon = imgSizeRegexp.ReplaceAllLiteralString(pr.Image, "_normal.jpg")
 
 	return pr, nil
 }
@@ -147,7 +148,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 		return tw, errors.New("failed finding time")
 	}
 	var err error
-	if tw.time, err = time.Parse(time.RFC3339, getAttr(tm, "datetime")); err != nil {
+	if tw.Time, err = time.Parse(time.RFC3339, getAttr(tm, "datetime")); err != nil {
 		return tw, err
 	}
 
@@ -159,10 +160,10 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	if err != nil {
 		return tw, err
 	}
-	tw.href = absoluteURL(getAttr(ln, "href"))
+	tw.Href = absoluteURL(getAttr(ln, "href"))
 
 	// The ID is the last component of the URL.
-	if tw.id, err = strconv.ParseInt(path.Base(tw.href), 10, 64); err != nil {
+	if tw.ID, err = strconv.ParseInt(path.Base(tw.Href), 10, 64); err != nil {
 		return tw, fmt.Errorf("failed parsing ID: %v", err)
 	}
 
@@ -173,13 +174,13 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	if un == nil {
 		return tw, errors.New("didn't find username")
 	}
-	tw.user = un.Data[1:]
+	tw.User = un.Data[1:]
 
 	// The full name lives in a sibling of the username text node's great-grandparent.
 	if un.Parent == nil || un.Parent.Parent == nil || un.Parent.Parent.Parent == nil {
 		return tw, errors.New("didn't find full name")
 	}
-	tw.name = getText(un.Parent.Parent.Parent.PrevSibling, false)
+	tw.Name = getText(un.Parent.Parent.Parent.PrevSibling, false)
 
 	body := head.NextSibling
 	if body == nil {
@@ -205,7 +206,7 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 		for _, n := range findNodes(children[0], func(n *html.Node) bool {
 			return isText(n) && len(n.Data) > 1 && n.Data[0] == '@'
 		}) {
-			tw.replyUsers = append(tw.replyUsers, n.Data[1:])
+			tw.ReplyUsers = append(tw.ReplyUsers, n.Data[1:])
 		}
 		text = children[1]
 		embed = children[2]
@@ -216,14 +217,14 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	content := &html.Node{Type: html.ElementNode, DataAtom: atom.Div, Data: "div"}
 
 	// If this is a retweet, add an attribution link at the top.
-	if tw.user != timelineUser {
+	if tw.User != timelineUser {
 		link := &html.Node{
 			Type:     html.ElementNode,
 			DataAtom: atom.A,
 			Data:     "a",
-			Attr:     []html.Attribute{{Key: "href", Val: tw.href}},
+			Attr:     []html.Attribute{{Key: "href", Val: tw.Href}},
 		}
-		link.AppendChild(&html.Node{Type: html.TextNode, Data: fmt.Sprintf("%s (@%s)", tw.name, tw.user)})
+		link.AppendChild(&html.Node{Type: html.TextNode, Data: fmt.Sprintf("%s (@%s)", tw.Name, tw.User)})
 		bold := &html.Node{Type: html.ElementNode, DataAtom: atom.B, Data: "b"}
 		bold.AppendChild(link)
 		content.AppendChild(bold)
@@ -252,8 +253,8 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	if err := html.Render(&b, content); err != nil {
 		return tw, fmt.Errorf("failed rendering text: %v", err)
 	}
-	tw.content = b.String()
-	tw.text = getText(content, true)
+	tw.Content = b.String()
+	tw.Text = getText(content, true)
 
 	return tw, nil
 }

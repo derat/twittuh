@@ -6,11 +6,94 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"golang.org/x/net/html"
 )
+
+var updateGolden = flag.Bool("update-golden", false, "Update parse tests' golden files")
+
+func TestParseTimeline(t *testing.T) {
+	fns, err := filepath.Glob("testdata/*.html")
+	if err != nil {
+		t.Fatal("Failed globbing HTML files: ", err)
+	}
+	for _, fn := range fns {
+		df, err := os.Open(fn)
+		if err != nil {
+			t.Fatal("Failed opening HTML file: ", err)
+		}
+		defer df.Close()
+
+		prof, tweets, err := parseTimeline(df)
+		if err != nil {
+			t.Errorf("Failed parsing %v: %v", fn, err)
+			continue
+		}
+
+		// Golden files.
+		pfn := fn[:len(fn)-5] + "-profile.json"
+		tfn := fn[:len(fn)-5] + "-tweets.json"
+
+		if *updateGolden {
+			if err := writeJSONFile(pfn, prof); err != nil {
+				t.Fatal("Failed writing golden profile: ", err)
+			}
+			if err := writeJSONFile(tfn, tweets); err != nil {
+				t.Fatal("Failed writing golden tweets: ", err)
+			}
+		} else {
+			var gp profile
+			if err := readJSONFile(pfn, &gp); err != nil {
+				t.Fatal("Failed reading golden profile: ", err)
+			}
+			if diff := cmp.Diff(gp, prof); diff != "" {
+				t.Errorf("Didn't get expected profile from %v:\n%v", fn, diff)
+			}
+			var gt []tweet
+			if err := readJSONFile(tfn, &gt); err != nil {
+				t.Fatal("Failed reading golden tweets: ", err)
+			}
+			if diff := cmp.Diff(gt, tweets); diff != "" {
+				t.Errorf("Didn't get expected tweets from %v:\n%v", fn, diff)
+			}
+		}
+	}
+}
+
+// writeJSONFile marshals v to JSON and writes it to fn.
+// It disables HTML escaping in the generated JSON.
+func writeJSONFile(fn string, v interface{}) error {
+	f, err := os.Create(fn)
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(f)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(v); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
+}
+
+// readJSONFile reads JSON data from fn and unmarshals it into dst.
+func readJSONFile(fn string, dst interface{}) error {
+	f, err := os.Open(fn)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return json.NewDecoder(f).Decode(dst)
+}
 
 func TestAddLineBreaks(t *testing.T) {
 	for _, tc := range []struct {

@@ -74,7 +74,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(flag.Args()) != 2 {
+	if len(flag.Args()) != 2 && !*dumpDOM {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -126,6 +126,7 @@ func main() {
 	}
 	if *dumpDOM {
 		os.Stdout.WriteString(dom)
+		os.Exit(0)
 	}
 
 	prof, tweets, err := parseTimeline(strings.NewReader(dom))
@@ -138,8 +139,8 @@ func main() {
 
 	var latestID int64
 	for _, tw := range tweets {
-		if tw.id > latestID {
-			latestID = tw.id
+		if tw.ID > latestID {
+			latestID = tw.ID
 		}
 	}
 	if latestID == oldLatestID {
@@ -183,18 +184,18 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 	if replies {
 		feedDesc += " and replies"
 	}
-	feedDesc += fmt.Sprintf(" from @%v's timeline", prof.user)
+	feedDesc += fmt.Sprintf(" from @%v's timeline", prof.User)
 
 	feed := &feeds.Feed{
 		Title:       author,
-		Link:        &feeds.Link{Href: userURL(prof.user)},
+		Link:        &feeds.Link{Href: userURL(prof.User)},
 		Description: feedDesc,
 		Author:      &feeds.Author{Name: author},
 		Updated:     time.Now(),
 		Copyright:   fmt.Sprintf("© %v %v", time.Now().Year(), author),
 	}
-	if prof.image != "" {
-		feed.Image = &feeds.Image{Url: prof.image}
+	if prof.Image != "" {
+		feed.Image = &feeds.Image{Url: prof.Image}
 	}
 
 	// User-supplied names may not have the canonical casing.
@@ -207,19 +208,19 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 		if !replies && t.reply() {
 			continue
 		}
-		if _, ok := skipUsersMap[strings.ToLower(t.user)]; ok && t.user != prof.user {
+		if _, ok := skipUsersMap[strings.ToLower(t.User)]; ok && t.User != prof.User {
 			continue
 		}
 
 		item := &feeds.Item{
-			Title:       t.text,
-			Link:        &feeds.Link{Href: t.href}, // Atom's default rel is "alternate"
-			Description: t.text,
+			Title:       t.Text,
+			Link:        &feeds.Link{Href: t.Href}, // Atom's default rel is "alternate"
+			Description: t.Text,
 			Author:      &feeds.Author{Name: t.displayName()},
-			Id:          fmt.Sprintf("%v", t.id),
-			Created:     t.time,
-			Updated:     t.time,
-			Content:     t.content,
+			Id:          fmt.Sprintf("%v", t.ID),
+			Created:     t.Time,
+			Updated:     t.Time,
+			Content:     t.Content,
 		}
 		if ut := []rune(item.Title); len(ut) > titleLen {
 			item.Title = string(ut[:titleLen-1]) + "…"
@@ -235,8 +236,8 @@ func writeFeed(w io.Writer, format feedFormat, prof profile, tweets []tweet,
 		// The marshaling here matches feeds.Feed.WriteJSON().
 		jf := (&feeds.JSON{Feed: feed}).JSONFeed()
 		jf.UserComment = fmt.Sprintf("latest id %v", latestID)
-		jf.Favicon = prof.icon
-		jf.Icon = prof.image
+		jf.Favicon = prof.Icon
+		jf.Icon = prof.Image
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		return enc.Encode(jf)
