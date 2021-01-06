@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -130,12 +131,9 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	}
 	main := n.FirstChild.NextSibling // first child is left column with profile photo
 
-	// Replace annoying emoji divs with text nodes containing the emoji themselves.
-	for _, n := range findNodes(main, func(n *html.Node) bool {
-		return isElement(n, "div") && getAttr(n, "style") == "height: 1.2em;" && getAttr(n, "aria-label") != ""
-	}) {
-		*n = html.Node{Type: html.TextNode, Data: getAttr(n, "aria-label")}
-	}
+	// Emoji are (usually?) represented by divs containing img tags, so replace all
+	// that garbage with text nodes containing the actual emoji.
+	fixEmoji(main)
 
 	head := main.FirstChild
 	if head == nil {
@@ -257,6 +255,38 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 	tw.Text = getText(content, true)
 
 	return tw, nil
+}
+
+// Used by fixEmoji to extract code point from e.g.
+// "https://abs-0.twimg.com/emoji/v2/svg/1f449.svg".
+var emojiRegexp = regexp.MustCompile(`^https://.*/emoji/v2/svg/([0-9a-f]+)\.svg$`)
+
+// fixEmoji emoji images with text nodes containing the emoji themselves.
+func fixEmoji(root *html.Node) {
+	// Emoji are placed within divs for no good reason as far as I can tell. We need
+	// to replace the outer divs so that we don't start a new block in the HTML.
+	for _, n := range findNodes(root, func(n *html.Node) bool {
+		return isElement(n, "div") && getAttr(n, "style") == "height: 1.2em;" && getAttr(n, "aria-label") != ""
+	}) {
+		img := findFirstNode(n, func(n *html.Node) bool {
+			return isElement(n, "img") && emojiRegexp.MatchString(getAttr(n, "src"))
+		})
+		if img == nil {
+			continue
+		}
+		u := emojiRegexp.FindStringSubmatch(getAttr(img, "src"))[1]
+		v, err := strconv.ParseUint(u, 16, 64)
+		if err != nil {
+			debugf("Failed getting code point from %q: %v", u, err)
+			continue
+		}
+		if v > unicode.MaxRune {
+			debugf("Invalid code point U+%X in %q", v, err)
+			continue
+		}
+		// Replace the outer div with a text node containing the actual emoji.
+		*n = html.Node{Type: html.TextNode, Data: string(rune(v))}
+	}
 }
 
 // addLineBreaks splits text nodes under n on newlines and inserts <br> tags.
