@@ -41,6 +41,7 @@ var verbose = false // enable verbose logging
 
 func main() {
 	var fetchOpts fetchOptions
+	var parseOpts parseOptions
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <user> <file>\n", os.Args[0])
@@ -61,6 +62,7 @@ func main() {
 	pageSettleDelay := flag.Int("page-settle-delay", 2, "Time to wait for page render in seconds")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
+	flag.BoolVar(&parseOpts.simplify, "simplify", true, "Simplify HTML in feed")
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
@@ -68,7 +70,7 @@ func main() {
 	ctx := context.Background()
 
 	if *debugFile != "" {
-		if err := debugParse(*debugFile, *replies); err != nil {
+		if err := debugParse(*debugFile, parseOpts, *replies); err != nil {
 			log.Fatal("Failed reading timeline: ", err)
 		}
 		os.Exit(0)
@@ -129,7 +131,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	prof, tweets, err := parseTimeline(strings.NewReader(dom))
+	prof, tweets, err := parseTimeline(strings.NewReader(dom), parseOpts)
 	if err != nil {
 		log.Fatalf("Failed parsing timeline for %v: %v", user, err)
 	} else if len(tweets) == 0 {
@@ -291,14 +293,14 @@ func getLatestID(p string, format feedFormat) (int64, error) {
 }
 
 // debugParse reads an HTML timeline from p and dumps its tweets to stdout.
-func debugParse(p string, replies bool) error {
+func debugParse(p string, opts parseOptions, replies bool) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	prof, tweets, err := parseTimeline(f)
+	prof, tweets, err := parseTimeline(f, opts)
 	if err != nil {
 		return err
 	}

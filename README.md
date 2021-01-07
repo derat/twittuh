@@ -64,6 +64,8 @@ Flags:
         Optional proxy server (e.g. "socks5://localhost:9050")
   -replies
         Include the user's replies
+  -simplify
+        Simplify HTML in feed (default true)
   -skip-users string
         Comma-separated users whose tweets should be skipped
   -tweet-timeout int

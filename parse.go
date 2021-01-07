@@ -54,8 +54,12 @@ func (t *tweet) reply() bool {
 	return len(t.ReplyUsers) > 0 && (len(t.ReplyUsers) > 1 || t.ReplyUsers[0] != t.User)
 }
 
+type parseOptions struct {
+	simplify bool
+}
+
 // parseTimeline reads an HTML document containing a Twitter timeline from r and returns its tweets.
-func parseTimeline(r io.Reader) (profile, []tweet, error) {
+func parseTimeline(r io.Reader, opts parseOptions) (profile, []tweet, error) {
 	var prof profile
 	root, err := html.Parse(r)
 	if err != nil {
@@ -72,7 +76,7 @@ func parseTimeline(r io.Reader) (profile, []tweet, error) {
 
 	var tweets []tweet
 	for i, tn := range findNodes(col, matchFunc("div", "data-testid=tweet")) {
-		tw, err := parseTweet(tn, prof.User)
+		tw, err := parseTweet(tn, prof.User, opts)
 		if err != nil {
 			var id string
 			if tw.ID > 0 {
@@ -122,7 +126,7 @@ func parseProfile(n *html.Node) (profile, error) {
 }
 
 // parseTweet parses a single tweet from the supplied tweet div.
-func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
+func parseTweet(n *html.Node, timelineUser string, opts parseOptions) (tweet, error) {
 	var tw tweet
 	if n.FirstChild == nil || n.FirstChild.NextSibling == nil {
 		return tw, errors.New("no right column")
@@ -239,11 +243,16 @@ func parseTweet(n *html.Node, timelineUser string) (tweet, error) {
 		content.AppendChild(embed)
 	}
 
-	deleteAttr(content, "class")
 	fixVideos(content)
 	rewriteRelativeLinks(content)
 	inlineUserLinks(content)
 	addLineBreaks(content)
+
+	// class attributes are meaningless since we aren't using the original stylesheet.
+	deleteAttr(content, "class")
+	if opts.simplify {
+		simplifyContent(content)
+	}
 
 	var b bytes.Buffer
 	if err := html.Render(&b, content); err != nil {
@@ -438,5 +447,25 @@ func fixVideos(n *html.Node) {
 				img.Parent.RemoveChild(img)
 			}
 		}
+	}
+}
+
+// simplifyContent removes probably-useless elements and styling from within root.
+func simplifyContent(root *html.Node) {
+	// Some (most?) RSS readers ignore style attributes.
+	// It's also good to drop weird "padding-bottom: 48.3333%;" styles on
+	// divs preceding embedded images.
+	deleteAttr(root, "style")
+
+	deleteAttr(root, "aria-hidden")    // set on links that will no longer be hidden
+	deleteAttr(root, "data-focusable") // set on links
+	deleteAttr(root, "data-testid")    // useful earlier for indentifying stuff, but not needed now
+	deleteAttr(root, "draggable")      // seems to be set on images, but default is already true
+	deleteAttr(root, "role")           // redundant role="link" attributes on links
+
+	// Also drop SVG elements, since they might not get rendered and show
+	// up with a huge size if they are.
+	for _, n := range findNodes(root, matchFunc("svg")) {
+		n.Parent.RemoveChild(n)
 	}
 }

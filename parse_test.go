@@ -38,7 +38,7 @@ func TestParseTimeline(t *testing.T) {
 		}
 		defer df.Close()
 
-		prof, tweets, err := parseTimeline(df)
+		prof, tweets, err := parseTimeline(df, parseOptions{simplify: true})
 		if err != nil {
 			t.Errorf("Failed parsing %v: %v", fn, err)
 			continue
