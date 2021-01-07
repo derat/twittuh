@@ -6,12 +6,14 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
+	"html/template"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -26,6 +28,10 @@ func TestParseTimeline(t *testing.T) {
 		t.Fatal("Failed globbing HTML files: ", err)
 	}
 	for _, fn := range fns {
+		if strings.HasSuffix(fn, "-golden.html") {
+			continue
+		}
+
 		df, err := os.Open(fn)
 		if err != nil {
 			t.Fatal("Failed opening HTML file: ", err)
@@ -38,61 +44,42 @@ func TestParseTimeline(t *testing.T) {
 			continue
 		}
 
-		// Golden files.
-		pfn := fn[:len(fn)-5] + "-profile.json"
-		tfn := fn[:len(fn)-5] + "-tweets.json"
+		// Write the parsed profile and tweets as a simple HTML document.
+		var out bytes.Buffer
+		tmpl := template.Must(template.New("").Funcs(map[string]interface{}{
+			"Raw":  func(s string) template.HTML { return template.HTML(s) },
+			"Time": func(t time.Time) string { return t.Local().Format("2006-01-02 15:04:05") },
+		}).Parse(tweetsTmpl))
+		if err := tmpl.Execute(&out, struct {
+			Profile profile
+			Tweets  []tweet
+		}{prof, tweets}); err != nil {
+			t.Fatal("Failed executing template: ", err)
+		}
 
+		gfn := fn[:len(fn)-5] + "-golden.html"
 		if *updateGolden {
-			if err := writeJSONFile(pfn, prof); err != nil {
-				t.Fatal("Failed writing golden profile: ", err)
-			}
-			if err := writeJSONFile(tfn, tweets); err != nil {
-				t.Fatal("Failed writing golden tweets: ", err)
+			if err := ioutil.WriteFile(gfn, out.Bytes(), 0644); err != nil {
+				t.Fatal("Failed writing golden file: ", err)
 			}
 		} else {
-			var gp profile
-			if err := readJSONFile(pfn, &gp); err != nil {
-				t.Fatal("Failed reading golden profile: ", err)
+			golden, err := ioutil.ReadFile(gfn)
+			if err != nil {
+				t.Fatal("Failed reading golden file: ", err)
 			}
-			if diff := cmp.Diff(gp, prof); diff != "" {
-				t.Errorf("Didn't get expected profile from %v:\n%v", fn, diff)
-			}
-			var gt []tweet
-			if err := readJSONFile(tfn, &gt); err != nil {
-				t.Fatal("Failed reading golden tweets: ", err)
-			}
-			if diff := cmp.Diff(gt, tweets); diff != "" {
-				t.Errorf("Didn't get expected tweets from %v:\n%v", fn, diff)
+			if diff := cmp.Diff(string(golden), out.String()); diff != "" {
+				tf, err := ioutil.TempFile("", "twittuh.parse_test.*.html")
+				if err != nil {
+					t.Fatal("Failed creating temp file: ", err)
+				}
+				defer tf.Close()
+				if _, err := tf.Write(out.Bytes()); err != nil {
+					t.Fatalf("Failed writing %v: %v", tf.Name(), err)
+				}
+				t.Errorf("Didn't get expected output for %v:\n%v\n\nSee %v", fn, diff, tf.Name())
 			}
 		}
 	}
-}
-
-// writeJSONFile marshals v to JSON and writes it to fn.
-// It disables HTML escaping in the generated JSON.
-func writeJSONFile(fn string, v interface{}) error {
-	f, err := os.Create(fn)
-	if err != nil {
-		return err
-	}
-	enc := json.NewEncoder(f)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(v); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
-}
-
-// readJSONFile reads JSON data from fn and unmarshals it into dst.
-func readJSONFile(fn string, dst interface{}) error {
-	f, err := os.Open(fn)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return json.NewDecoder(f).Decode(dst)
 }
 
 func TestAddLineBreaks(t *testing.T) {
@@ -133,3 +120,76 @@ func TestAddLineBreaks(t *testing.T) {
 		}
 	}
 }
+
+const tweetsTmpl = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'none'">
+    <title>{{.Profile.Name}} (@{{.Profile.User}})</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        max-width: 800px;
+      }
+      .profile {
+        font-height: 24px;
+        font-weight: bold;
+        margin-left: 4px;
+      }
+      .profile img {
+        height: 24px;
+        width: 24px;
+      }
+      .profile .user { color: #888 }
+      .tweet .head {
+        font-weight: bold;
+        margin: 8px;
+      }
+      .tweet .head .id { display: none }
+      .tweet .head .user { color: #888 }
+      .tweet .head .time { margin-left: 4px }
+      .tweet .head a {
+        color: black;
+        text-decoration: none;
+      }
+      .tweet .content { margin: 4px }
+      .tweet .content img, .tweet .content svg {
+        max-height: 300px;
+        max-width: 300px;
+      }
+      .tweet .text { display: none }
+      .tweet hr { border: solid 1px #ddd }
+      .sep { border: solid 1px black }
+    </style>
+  </head>
+  <body>
+    <div class="profile">
+      <img src="{{.Profile.Icon}}">
+      {{.Profile.Name}}
+      <span class="user">@{{.Profile.User}}</span>
+    </div>
+    <hr class="sep">
+    {{range .Tweets -}}
+    <div class="tweet">
+      <div class="head">
+        <a href="{{.Href}}">
+          <span class="id">{{.ID}}</span>
+          {{.Name}}
+          <span class="user">@{{.User}}</span>
+          <span class="time">{{Time .Time}}</span>
+        </a>
+      </div>
+      <hr>
+      {{- if .ReplyUsers -}}
+      <div class="reply">
+        {{range .ReplyUsers}}{{.}}{{end}}
+      </div>
+      {{- end}}
+      <div class="content">{{Raw .Content}}</div>
+      <div class="text">{{.Text}}</div>
+    </div>
+    <hr class="sep">
+    {{- end}}
+  </body>
+</html>`

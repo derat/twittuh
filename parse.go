@@ -21,12 +21,11 @@ import (
 )
 
 // profile contains information about a user.
-// Only marshaled to JSON for testing.
 type profile struct {
-	User  string `json:"user"`  // screen name (without '@')
-	Name  string `json:"name"`  // full name
-	Icon  string `json:"icon"`  // small (48x48) favicon URL
-	Image string `json:"image"` // large (200x200 or 400x400) avatar URL
+	User  string // screen name (without '@')
+	Name  string // full name
+	Icon  string // small (48x48) favicon URL
+	Image string // large (200x200 or 400x400) avatar URL
 }
 
 func (p *profile) displayName() string {
@@ -34,16 +33,15 @@ func (p *profile) displayName() string {
 }
 
 // tweet describes a single tweet.
-// Only marshaled to JSON for testing.
 type tweet struct {
-	ID         int64     `json:"id"`
-	Href       string    `json:"href"` // absolute URL to tweet
-	User       string    `json:"user"` // screen name (without '@')
-	Name       string    `json:"name"` // full name
-	Time       time.Time `json:"time"`
-	Content    string    `json:"content"`    // HTML content
-	Text       string    `json:"text"`       // text from content
-	ReplyUsers []string  `json:"replyUsers"` // empty if not reply (without '@')
+	ID         int64
+	Href       string // absolute URL to tweet
+	User       string // screen name (without '@')
+	Name       string // full name
+	Time       time.Time
+	Content    string   // HTML content
+	Text       string   // text from content
+	ReplyUsers []string // empty if not reply (without '@')
 }
 
 func (t *tweet) displayName() string {
