@@ -50,7 +50,7 @@ func TestParseTimeline(t *testing.T) {
 		var out bytes.Buffer
 		tmpl := template.Must(template.New("").Funcs(map[string]interface{}{
 			"Raw":  func(s string) template.HTML { return template.HTML(s) },
-			"Time": func(t time.Time) string { return t.Local().Format("2006-01-02 15:04:05") },
+			"Time": func(t time.Time) string { return t.UTC().Format("2006-01-02 15:04:05") },
 		}).Parse(tweetsTmpl))
 		if err := tmpl.Execute(&out, struct {
 			Profile profile
