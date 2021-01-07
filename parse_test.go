@@ -160,7 +160,7 @@ const tweetsTmpl = `<!DOCTYPE html>
       }
       .tweet .head .id { display: none }
       .tweet .head .user { color: #888 }
-      .tweet .head .time { margin-left: 4px }
+      .tweet .head .time { margin-left: 12px }
       .tweet .head a {
         color: black;
         text-decoration: none;

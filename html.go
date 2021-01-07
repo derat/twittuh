@@ -24,6 +24,19 @@ func findNodes(n *html.Node, f func(*html.Node) bool) []*html.Node {
 	return ns
 }
 
+// findNodesAll returns nodes within the tree rooted at n for which f returns true.
+// After a node is matched, its children will also be searched.
+func findNodesAll(n *html.Node, f func(*html.Node) bool) []*html.Node {
+	var ns []*html.Node
+	if f(n) {
+		ns = append(ns, n)
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		ns = append(ns, findNodesAll(c, f)...)
+	}
+	return ns
+}
+
 // findFirstNode performs a DFS on n, returning the first node for which f returns true.
 func findFirstNode(n *html.Node, f func(*html.Node) bool) *html.Node {
 	if f(n) {
@@ -151,4 +164,20 @@ func getText(n *html.Node, addSpaces bool) string {
 		}
 	}
 	return text
+}
+
+// replaceNode replaces old with n.
+func replaceNode(n, old *html.Node) {
+	old.Parent.InsertBefore(n, old)
+	old.Parent.RemoveChild(old)
+}
+
+// promoteChildren promotes all of n's children into its parent
+// and then removes n.
+func promoteChildren(n *html.Node) {
+	for c := n.FirstChild; c != nil; c = n.FirstChild {
+		n.RemoveChild(c)
+		n.Parent.InsertBefore(c, n)
+	}
+	n.Parent.RemoveChild(n)
 }

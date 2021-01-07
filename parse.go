@@ -292,7 +292,7 @@ func fixEmoji(root *html.Node) {
 			continue
 		}
 		// Replace the outer div with a text node containing the actual emoji.
-		*n = html.Node{Type: html.TextNode, Data: string(rune(v))}
+		replaceNode(&html.Node{Type: html.TextNode, Data: string(rune(v))}, n)
 	}
 }
 
@@ -461,11 +461,33 @@ func simplifyContent(root *html.Node) {
 	deleteAttr(root, "data-focusable") // set on links
 	deleteAttr(root, "data-testid")    // useful earlier for indentifying stuff, but not needed now
 	deleteAttr(root, "draggable")      // seems to be set on images, but default is already true
+	deleteAttr(root, "rel")            // "noopener" and "noreferrer" should be added by the RSS reader
 	deleteAttr(root, "role")           // redundant role="link" attributes on links
+	deleteAttr(root, "target")         // "_blank" should be added by the RSS reader
 
 	// Also drop SVG elements, since they might not get rendered and show
 	// up with a huge size if they are.
 	for _, n := range findNodes(root, matchFunc("svg")) {
 		n.Parent.RemoveChild(n)
+
+	}
+
+	// If a div has a div as its parent (i.e. we're already in a block context),
+	// and it doesn't have any attributes or contain any text, then drop it.
+	for _, n := range findNodesAll(root, func(n *html.Node) bool {
+		return isElement(n, "div") && (len(n.Attr) == 0 || getText(n, false) == "")
+	}) {
+		if isElement(n.Parent, "div") {
+			promoteChildren(n)
+		}
+	}
+
+	// Drop attribute-less spans entirely.
+	for _, n := range findNodesAll(root, func(n *html.Node) bool {
+		return isElement(n, "span") && len(n.Attr) == 0
+	}) {
+		if n.Parent != nil {
+			promoteChildren(n)
+		}
 	}
 }
