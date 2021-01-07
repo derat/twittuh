@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/derat/htmlpretty"
+
 	"github.com/google/go-cmp/cmp"
 
 	"golang.org/x/net/html"
@@ -55,6 +57,16 @@ func TestParseTimeline(t *testing.T) {
 			Tweets  []tweet
 		}{prof, tweets}); err != nil {
 			t.Fatal("Failed executing template: ", err)
+		}
+
+		// Pretty-print the HTML to make it easier to compare.
+		root, err := html.Parse(&out)
+		if err != nil {
+			t.Fatalf("Output for %v is malformed: %v", fn, err)
+		}
+		out.Reset()
+		if err := htmlpretty.Print(&out, root, "  ", 120); err != nil {
+			t.Fatalf("Failed pretty-printing output for %v: %v", fn, err)
 		}
 
 		gfn := fn[:len(fn)-5] + "-golden.html"
