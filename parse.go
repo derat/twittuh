@@ -252,6 +252,7 @@ func parseTweet(n *html.Node, timelineUser string, opts parseOptions) (tweet, er
 	deleteAttr(content, "class")
 	if opts.simplify {
 		simplifyContent(content)
+		linkifyURLs(content) // requires simplifyContent to merge spans first
 	}
 
 	var b bytes.Buffer
@@ -500,5 +501,33 @@ func simplifyContent(root *html.Node) {
 		if n.Parent != nil {
 			promoteChildren(n)
 		}
+	}
+}
+
+// linkifyURLs finds spans containing URLs and replaces them with links.
+// When a quoted tweet has an embedded link, Twitter places the URL at the end
+// of the tweet but breaks it up across multiple spans (to make it easier to elide,
+// presumably). See e.g. https://twitter.com/AshleyRParker/status/1347365487961923585
+// After simplifyContent has merged those spans, this function linkifies them.
+func linkifyURLs(root *html.Node) {
+	// Find spans containing just a URL.
+	for _, n := range findNodes(root, func(n *html.Node) bool {
+		if !isElement(n, "span") {
+			return false
+		}
+		text := getText(n, false)
+		return (strings.HasPrefix(text, "https://") || strings.HasPrefix(text, "http://")) &&
+			strings.IndexByte(text, ' ') == -1
+	}) {
+		// Drop ellipses provided by final span.
+		url := strings.TrimRight(getText(n, false), "…")
+		link := &html.Node{
+			Type:     html.ElementNode,
+			DataAtom: atom.A,
+			Data:     "a",
+			Attr:     []html.Attribute{{Key: "href", Val: url}},
+		}
+		link.AppendChild(&html.Node{Type: html.TextNode, Data: url})
+		replaceNode(link, n)
 	}
 }
