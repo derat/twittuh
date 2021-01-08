@@ -265,13 +265,15 @@ func parseTweet(n *html.Node, timelineUser string, opts parseOptions) (tweet, er
 }
 
 // Used by fixEmoji to extract code point from e.g.
-// "https://abs-0.twimg.com/emoji/v2/svg/1f449.svg".
-var emojiRegexp = regexp.MustCompile(`^https://.*/emoji/v2/svg/([0-9a-f]+)\.svg$`)
+// "https://abs-0.twimg.com/emoji/v2/svg/1f449.svg" or
+// "https://abs-0.twimg.com/emoji/v2/svg/1f4aa-1f3fe.svg".
+var emojiRegexp = regexp.MustCompile(`^https://.*/emoji/v2/svg/([-0-9a-f]+)\.svg$`)
 
 // fixEmoji emoji images with text nodes containing the emoji themselves.
 func fixEmoji(root *html.Node) {
 	// Emoji are placed within divs for no good reason as far as I can tell. We need
 	// to replace the outer divs so that we don't start a new block in the HTML.
+Loop:
 	for _, n := range findNodes(root, func(n *html.Node) bool {
 		return isElement(n, "div") && getAttr(n, "style") == "height: 1.2em;" && getAttr(n, "aria-label") != ""
 	}) {
@@ -281,18 +283,26 @@ func fixEmoji(root *html.Node) {
 		if img == nil {
 			continue
 		}
-		u := emojiRegexp.FindStringSubmatch(getAttr(img, "src"))[1]
-		v, err := strconv.ParseUint(u, 16, 64)
-		if err != nil {
-			debugf("Failed getting code point from %q: %v", u, err)
-			continue
+
+		// The URL gives us the individual code points in the emoji (including 200d for ZWJ),
+		// so split it on dashes and then reassemble the runes.
+		var data string
+		src := getAttr(img, "src")
+		for _, s := range strings.Split(emojiRegexp.FindStringSubmatch(src)[1], "-") {
+			v, err := strconv.ParseUint(s, 16, 64)
+			if err != nil {
+				debugf("Failed getting code point from %q: %v", src, err)
+				continue Loop
+			}
+			if v > unicode.MaxRune {
+				debugf("Invalid code point U+%X in %q", v, err)
+				continue Loop
+			}
+			data += string(rune(v))
 		}
-		if v > unicode.MaxRune {
-			debugf("Invalid code point U+%X in %q", v, err)
-			continue
-		}
+
 		// Replace the outer div with a text node containing the actual emoji.
-		replaceNode(&html.Node{Type: html.TextNode, Data: string(rune(v))}, n)
+		replaceNode(&html.Node{Type: html.TextNode, Data: data}, n)
 	}
 }
 
@@ -463,6 +473,7 @@ func simplifyContent(root *html.Node) {
 	deleteAttr(root, "draggable")      // seems to be set on images, but default is already true
 	deleteAttr(root, "rel")            // "noopener" and "noreferrer" should be added by the RSS reader
 	deleteAttr(root, "role")           // redundant role="link" attributes on links
+	deleteAttr(root, "tabindex")       // should be handled by RSS reader
 	deleteAttr(root, "target")         // "_blank" should be added by the RSS reader
 
 	// Also drop SVG elements, since they might not get rendered and show
