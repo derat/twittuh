@@ -16,6 +16,8 @@ import (
 const (
 	hasTweetExpr       = `!!document.querySelector('div[data-testid="tweet"]')`
 	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
+	showSensitiveExpr  = `Array.from(document.querySelectorAll('article div[role=button]'))` +
+		`.filter(e => e.innerText == 'View').forEach(e => e.click())`
 )
 
 type fetchOptions struct {
@@ -23,6 +25,7 @@ type fetchOptions struct {
 	proxy, cacheDir string
 	tweetTimeout    time.Duration
 	pageSettleDelay time.Duration
+	showSensitive   bool
 	logDebug        bool
 }
 
@@ -74,6 +77,14 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 		case <-tctx.Done():
 			return "", fmt.Errorf("failed loading tweets: %v", tctx.Err())
 		case <-time.After(hasTweetCheckDelay):
+		}
+	}
+
+	if opts.showSensitive {
+		debug("Showing sensitive content")
+		var res []byte
+		if err := chromedp.Run(tctx, chromedp.Evaluate(showSensitiveExpr, &res)); err != nil {
+			return "", fmt.Errorf("failed showing sensitive content: %v", err)
 		}
 	}
 

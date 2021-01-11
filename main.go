@@ -61,6 +61,7 @@ func main() {
 	flag.StringVar(&fetchOpts.proxy, "proxy", "", `Optional proxy server (e.g. "socks5://localhost:9050")`)
 	pageSettleDelay := flag.Int("page-settle-delay", 2, "Time to wait for page render in seconds")
 	replies := flag.Bool("replies", false, "Include the user's replies")
+	flag.BoolVar(&fetchOpts.showSensitive, "show-sensitive", true, "Show sensitive content in tweets")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	flag.BoolVar(&parseOpts.simplify, "simplify", true, "Simplify HTML in feed")
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
