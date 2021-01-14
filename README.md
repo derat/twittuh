@@ -66,6 +66,8 @@ Flags:
         Include the user's replies
   -show-sensitive
         Show sensitive content in tweets (default true)
+  -show-sensitive-delay int
+        Time to wait after showing sensitive content (default 1)
   -simplify
         Simplify HTML in feed (default true)
   -skip-users string

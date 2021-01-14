@@ -21,12 +21,13 @@ const (
 )
 
 type fetchOptions struct {
-	width, height   int
-	proxy, cacheDir string
-	tweetTimeout    time.Duration
-	pageSettleDelay time.Duration
-	showSensitive   bool
-	logDebug        bool
+	width, height      int
+	proxy, cacheDir    string
+	tweetTimeout       time.Duration
+	pageSettleDelay    time.Duration
+	showSensitive      bool
+	showSensitiveDelay time.Duration
+	logDebug           bool
 }
 
 // fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
@@ -80,19 +81,23 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 		}
 	}
 
+	// This is a hack, but wait a bit longer after the first tweet shows up in the hope that
+	// additional content (e.g. more tweets and link cards in embeds) will appear.
+	if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.pageSettleDelay).Before(dl) {
+		debug("Waiting for page to settle")
+		time.Sleep(opts.pageSettleDelay)
+	}
+
 	if opts.showSensitive {
 		debug("Showing sensitive content")
 		var res []byte
 		if err := chromedp.Run(tctx, chromedp.Evaluate(showSensitiveExpr, &res)); err != nil {
 			return "", fmt.Errorf("failed showing sensitive content: %v", err)
 		}
-	}
-
-	// This is a hack, but wait a bit longer after the first tweet shows up in the hope that
-	// additional content (e.g. more tweets and link cards in embeds) will appear.
-	if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.pageSettleDelay).Before(dl) {
-		debug("Waiting for page to settle")
-		time.Sleep(opts.pageSettleDelay)
+		if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.showSensitiveDelay).Before(dl) {
+			debug("Waiting for sensitive content")
+			time.Sleep(opts.showSensitiveDelay)
+		}
 	}
 
 	// Return the rendered DOM.

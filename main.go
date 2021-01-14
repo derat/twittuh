@@ -62,6 +62,7 @@ func main() {
 	pageSettleDelay := flag.Int("page-settle-delay", 2, "Time to wait for page render in seconds")
 	replies := flag.Bool("replies", false, "Include the user's replies")
 	flag.BoolVar(&fetchOpts.showSensitive, "show-sensitive", true, "Show sensitive content in tweets")
+	showSensitiveDelay := flag.Int("show-sensitive-delay", 1, "Time to wait after showing sensitive content")
 	skipUsers := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	flag.BoolVar(&parseOpts.simplify, "simplify", true, "Simplify HTML in feed")
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
@@ -97,6 +98,7 @@ func main() {
 	}
 
 	fetchOpts.pageSettleDelay = time.Duration(*pageSettleDelay) * time.Second
+	fetchOpts.showSensitiveDelay = time.Duration(*showSensitiveDelay) * time.Second
 	fetchOpts.tweetTimeout = time.Duration(*tweetTimeout) * time.Second
 
 	var oldLatestID int64
