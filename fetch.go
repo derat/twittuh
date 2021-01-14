@@ -17,7 +17,7 @@ const (
 	hasTweetExpr       = `!!document.querySelector('div[data-testid="tweet"]')`
 	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
 	showSensitiveExpr  = `Array.from(document.querySelectorAll('article div[role=button]'))` +
-		`.filter(e => e.innerText == 'View').forEach(e => e.click())`
+		`.filter(e => e.innerText == 'View').map(e => e.click() || true).length`
 )
 
 type fetchOptions struct {
@@ -90,13 +90,16 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 
 	if opts.showSensitive {
 		debug("Showing sensitive content")
-		var res []byte
-		if err := chromedp.Run(tctx, chromedp.Evaluate(showSensitiveExpr, &res)); err != nil {
+		var cnt int
+		if err := chromedp.Run(tctx, chromedp.Evaluate(showSensitiveExpr, &cnt)); err != nil {
 			return "", fmt.Errorf("failed showing sensitive content: %v", err)
 		}
-		if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.showSensitiveDelay).Before(dl) {
-			debug("Waiting for sensitive content")
-			time.Sleep(opts.showSensitiveDelay)
+		if cnt > 0 {
+			debugf("Showed %d piece(s) of sensitive content", cnt)
+			if dl, ok := ctx.Deadline(); !ok || time.Now().Add(opts.showSensitiveDelay).Before(dl) {
+				debug("Waiting for sensitive content")
+				time.Sleep(opts.showSensitiveDelay)
+			}
 		}
 	}
 
