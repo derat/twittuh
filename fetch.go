@@ -91,7 +91,7 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 	if opts.showSensitive {
 		debug("Showing sensitive content")
 		var cnt int
-		if err := chromedp.Run(tctx, chromedp.Evaluate(showSensitiveExpr, &cnt)); err != nil {
+		if err := chromedp.Run(ctx, chromedp.Evaluate(showSensitiveExpr, &cnt)); err != nil {
 			return "", fmt.Errorf("failed showing sensitive content: %v", err)
 		}
 		if cnt > 0 {
