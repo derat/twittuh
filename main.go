@@ -46,6 +46,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [flag]... <user> <file>\n", os.Args[0])
 		fmt.Fprintln(flag.CommandLine.Output(), "Creates an RSS feed from a Twitter user's timeline.")
+		fmt.Fprintln(flag.CommandLine.Output(), "Pass '-' for <file> to write feed to stdout.")
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
@@ -84,6 +85,7 @@ func main() {
 	}
 	user := bareUser(flag.Arg(0))
 	feedPath := flag.Arg(1)
+	useStdout := feedPath == "-"
 	format := feedFormat(*formatFlag)
 
 	ps := strings.Split(*browserSize, "x")
@@ -103,7 +105,7 @@ func main() {
 
 	var oldLatestID int64
 	var err error
-	if !*force {
+	if !*force && !useStdout {
 		if oldLatestID, err = getLatestID(feedPath, format); err != nil {
 			log.Printf("Couldn't get old latest ID from %v: %v", feedPath, err)
 		}
@@ -153,13 +155,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Write to a temp file and then replace the feed atomically to preserve the old version if
-	// something goes wrong.
-	f, err := ioutil.TempFile(filepath.Dir(feedPath), "."+filepath.Base(feedPath)+".")
-	if err != nil {
-		log.Fatal("Failed creating feed file: ", err)
+	var f *os.File
+	if useStdout {
+		f = os.Stdout
+	} else {
+		// Write to a temp file and then replace the feed atomically to preserve the old version if
+		// something goes wrong.
+		if f, err = ioutil.TempFile(filepath.Dir(feedPath), "."+filepath.Base(feedPath)+"."); err != nil {
+			log.Fatal("Failed creating feed file: ", err)
+		}
+		defer os.Remove(f.Name()) // silently fails if we successfully rename temp file
 	}
-	defer os.Remove(f.Name()) // fails if we successfully rename temp file
 
 	if err := writeFeed(f, format, prof, tweets, latestID, *replies, strings.Split(*skipUsers, ",")); err != nil {
 		f.Close()
@@ -168,15 +174,18 @@ func main() {
 	if err := f.Close(); err != nil {
 		log.Fatal("Failed closing feed file: ", err)
 	}
-	mode := defaultMode // ioutil.TempFile seems to use 0600 by default
-	if fi, err := os.Stat(feedPath); err == nil {
-		mode = fi.Mode()
-	}
-	if err := os.Chmod(f.Name(), mode); err != nil {
-		log.Print("Failed setting mode: ", err)
-	}
-	if err := os.Rename(f.Name(), feedPath); err != nil {
-		log.Fatal("Failed replacing feed file: ", err)
+
+	if !useStdout {
+		mode := defaultMode // ioutil.TempFile seems to use 0600 by default
+		if fi, err := os.Stat(feedPath); err == nil {
+			mode = fi.Mode()
+		}
+		if err := os.Chmod(f.Name(), mode); err != nil {
+			log.Print("Failed setting mode: ", err)
+		}
+		if err := os.Rename(f.Name(), feedPath); err != nil {
+			log.Fatal("Failed replacing feed file: ", err)
+		}
 	}
 }
 

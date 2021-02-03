@@ -39,6 +39,7 @@ installed using the subsequent `apt` command.)
 ```
 Usage: twittuh [flag]... <user> <file>
 Creates an RSS feed from a Twitter user's timeline.
+Pass '-' for <file> to write feed to stdout.
 Flags:
   -browser-size string
         Browser viewport size (default "1024x8192")
@@ -59,7 +60,7 @@ Flags:
   -format string
         Feed format to write ("atom", "json", "rss") (default "atom")
   -page-settle-delay int
-        Time to wait for page render in seconds (default 2)
+        Seconds to wait for page render (default 2)
   -proxy string
         Optional proxy server (e.g. "socks5://localhost:9050")
   -replies
@@ -67,7 +68,7 @@ Flags:
   -show-sensitive
         Show sensitive content in tweets (default true)
   -show-sensitive-delay int
-        Time to wait after showing sensitive content (default 1)
+        Seconds to wait after showing sensitive content (default 2)
   -simplify
         Simplify HTML in feed (default true)
   -skip-users string
