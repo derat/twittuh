@@ -1,0 +1,105 @@
+#!/usr/bin/python3
+
+import argparse
+import os
+import requests
+import subprocess
+import time
+
+# Users in the order in which they'll be scraped.
+USERS = [
+    'NWS',
+    'USPS',
+]
+
+# Path to twittuh executable (cron runs commands using a very short $PATH).
+TWITTUH = os.path.join(os.getenv('HOME'), 'go/bin/twittuh')
+
+# Directory where feeds should be written.
+FEED_DIR = '/srv/example.org/htdocs'
+
+# Directory where log files should be written.
+LOG_DIR = os.path.join(os.getenv('HOME'), '.twittuh_logs')
+
+# Base URL under which feeds are served.
+BASE_URL = 'https://example.org/'
+
+# Chrome cache directory.
+CACHE_DIR = os.path.join(os.getenv('HOME'), '.cache/twittuh')
+
+# Pubsubhubbub hup to notify about updates.
+HUB_URL = 'https://pubsubhubbub.appspot.com/'
+
+# URL of TOR proxy to use to get around Twitter blocking cloud providers.
+PROXY_URL = 'socks5://localhost:9050'
+
+# Timeout for fetching a timeline, in seconds.
+FETCH_TIMEOUT = 80
+
+# Timeout for fetching a timeline's tweets, in seconds.
+TWEET_TIMEOUT = 35
+
+# Time to wait for embeds to be added before dumping DOM.
+PAGE_SETTLE_DELAY = 6
+
+# Amount of time to distribute across all users (i.e. frequency of cron job).
+INTERVAL_SEC = 2 * 3600
+
+# Time allotted to each user.
+USER_SEC = float(INTERVAL_SEC) / len(USERS)
+
+# Scrapes the supplied user's timeline. The timeout is in seconds.
+def scrape(user, timeout, output_file=None):
+    args = [
+        'nice',
+        '-n', '10',
+        TWITTUH,
+        '-cache-dir', CACHE_DIR,
+        '-fetch-timeout', str(FETCH_TIMEOUT),
+        '-format', 'json',
+        '-page-settle-delay', str(PAGE_SETTLE_DELAY),
+        '-proxy', PROXY_URL,
+        '-skip-users', ','.join(u for u in USERS if u != user),
+        '-tweet-timeout', str(TWEET_TIMEOUT),
+        '-verbose',
+        user,
+        os.path.join(FEED_DIR, user+'.json')
+    ]
+    subprocess.run(args, check=True, timeout=timeout,
+                   stdout=output_file, stderr=output_file)
+    if HUB_URL:
+        requests.post(url=HUB_URL, data={
+            'hub.mode': 'publish',
+            'hub.url': BASE_URL + user + '.json',
+        })
+
+def main():
+    parser = argparse.ArgumentParser(description='Scrape Twitter timelines.')
+    parser.add_argument('--user', help='scrape only this user and exit')
+    args = parser.parse_args()
+
+    if args.user:
+        scrape(args.user, USER_SEC)
+        return
+
+    start = time.time()
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    log_path = os.path.join(LOG_DIR, time.strftime('%Y%m%d-%H%M%S.log'))
+    with open(log_path, 'w') as log_file:
+        users = USERS.copy()
+        while users:
+            if time.time() - start >= INTERVAL_SEC - USER_SEC:
+                print('Failed scraping some users: %s' % ', '.join(users))
+                print('Output saved to %s' % log_path)
+                break
+
+            user = users.pop(0)
+            try:
+                scrape(user, USER_SEC, log_file)
+            except Exception as e:
+                log_file.write('Scraping %s failed: %s\n' % (user, e))
+                users.append(user)
+
+if __name__ == '__main__':
+    main()
