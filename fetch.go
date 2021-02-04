@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -14,10 +15,12 @@ import (
 )
 
 const (
-	hasTweetExpr       = `!!document.querySelector('div[data-testid="tweet"]')`
+	hasTweetExpr   = `!!document.querySelector('div[data-testid="tweet"]')`
+	loadFailedExpr = `!!Array.from(document.querySelectorAll('div[role="button"]'))` +
+		`.find(e => e.innerText === 'Try again')`
 	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
 	showSensitiveExpr  = `Array.from(document.querySelectorAll('article div[role=button]'))` +
-		`.filter(e => e.innerText == 'View').map(e => e.click() || true).length`
+		`.filter(e => e.innerText === 'View').map(e => e.click() || true).length`
 )
 
 type fetchOptions struct {
@@ -73,6 +76,12 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 		} else if exists {
 			debug("Found tweets")
 			break
+		}
+		var failed bool
+		if err := chromedp.Run(tctx, chromedp.Evaluate(loadFailedExpr, &failed)); err != nil {
+			return "", fmt.Errorf("failed checking if load failed: %v", err)
+		} else if failed {
+			return "", errors.New("didn't receive tweets (rate-limited?)")
 		}
 		select {
 		case <-tctx.Done():
