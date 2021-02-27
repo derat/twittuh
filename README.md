@@ -77,6 +77,8 @@ Flags:
         Optional proxy server (e.g. "socks5://localhost:9050")
   -replies
         Include the user's replies
+  -serve string
+        Listen for requests over HTTP (e.g. "0.0.0.0:8080")
   -show-sensitive
         Show sensitive content in tweets (default true)
   -show-sensitive-delay int
@@ -85,6 +87,8 @@ Flags:
         Simplify HTML in feed (default true)
   -skip-users string
         Comma-separated users whose tweets should be skipped
+  -tor-control string
+        Interface for resetting Tor circuits after fetch fails (e.g. "0.0.0.0:9051")
   -tweet-timeout int
         Timeout for loading tweets in seconds
   -verbose
@@ -93,15 +97,15 @@ Flags:
 
 ## Tips
 
+### Tor
+
 Twitter seems to haphazardly block unauthenticated timeline requests. When this
 happens, the timeline page itself (e.g. `https://twitter.com/NWS`) loads but the
 XHR to load the actual tweets fails. The page shows a `Something went wrong.`
 message and a `Try again` button.
 
 I suspect that some cloud providers' networks are proactively blocked.
-Fortunately, it's easy to route requests through [Tor]. Some Tor exit nodes also
-appear to be blocked, but after a few retries (to use new exit nodes), the
-request typically goes through.
+Fortunately, it's easy to route requests through [Tor].
 
 On a Debian system, run the following as the `root` user to install Tor:
 
@@ -111,6 +115,16 @@ On a Debian system, run the following as the `root` user to install Tor:
 
 You can then pass `-proxy socks5://localhost:9050` to `twittuh` to tell it to
 instruct Chrome to use the Tor proxy.
+
+Some Tor exit nodes also appear to be blocked. You can tell Tor to reset its
+circuits (likely resulting in a new exit IP) by sending a `NEWNYM` command to
+its control socket (see `resetTorCircuits` in [main.go](./main.go)) or
+(allegedly) by sending a `HUP` signal to the `tor` process to tell it to reload
+its configuration.
+
+[Tor]: https://www.torproject.org/
+
+### Example script
 
 The [scrape_twitter.py.example] file in this repository may be helpful if you
 want to run `twittuh` periodically via cron to monitor multiple timelines. The
@@ -127,5 +141,32 @@ and add a line like the following to your crontab:
 30 */4 * * * /path/to/scrape_twitter.py
 ```
 
-[Tor]: https://www.torproject.org/
 [scrape_twitter.py.example]: ./scrape_twitter.py.example
+
+### Docker
+
+[Docker] can be used to run `twittuh -serve` in a container. The
+[Dockerfile](./Dockerfile) in this repository builds a container image that runs
+an instance of `twittuh` listening for HTTP `GET` requests on port 8080. Tor is
+also installed. The HTTP endpoint accepts `user` and `format` query parametrs.
+
+When executed in this directory, the following command uses [Cloud Build] to
+build a container and submit it to the [Container Registry].
+
+```
+$ gcloud --project ${PROJECT_ID} builds submit \
+    --tag gcr.io/${PROJECT_ID}/twittuh
+```
+
+After updating the container image, you can run a command like the following to
+make a [Compute Engine] instance reload it:
+
+```
+$ gcloud --project ${PROJECT_ID} compute instances update-container \
+    ${GCE_INSTANCE} --container-image gcr.io/${PROJECT_ID}/twittuh
+```
+
+[Docker]: https://www.docker.com/
+[Cloud Build]: https://cloud.google.com/build
+[Container Registry]: https://cloud.google.com/container-registry
+[Compute Engine]: https://cloud.google.com/compute

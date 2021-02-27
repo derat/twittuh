@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,8 +35,9 @@ const (
 )
 
 const (
-	titleLen                = 80   // max length of title text in feed, in runes
-	defaultMode os.FileMode = 0644 // default mode for new feed files
+	titleLen                      = 80   // max length of title text in feed, in runes
+	defaultMode       os.FileMode = 0644 // default mode for new feed files
+	torControlTimeout             = 5 * time.Second
 )
 
 var verbose = false // enable verbose logging
@@ -68,6 +70,7 @@ func main() {
 	showSensitiveDelay := flag.Int("show-sensitive-delay", 2, "Seconds to wait after showing sensitive content")
 	skipUsersStr := flag.String("skip-users", "", "Comma-separated users whose tweets should be skipped")
 	flag.BoolVar(&parseOpts.simplify, "simplify", true, "Simplify HTML in feed")
+	torControlAddr := flag.String("tor-control", "", `Interface for resetting Tor circuits after fetch fails (e.g. "0.0.0.0:9051")`)
 	tweetTimeout := flag.Int("tweet-timeout", 0, "Timeout for loading tweets in seconds")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
@@ -99,19 +102,33 @@ func main() {
 	skipUsers := strings.Split(*skipUsersStr, ",")
 
 	if *serveAddr != "" {
+		// Handle HTTP requests.
 		http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			user := bareUser(req.FormValue("user"))
+			log.Printf("Got request from %v for %v", req.RemoteAddr, user)
 			if user == "" {
 				http.Error(w, "No user specified", http.StatusInternalServerError)
 				return
 			}
+
 			prof, tweets, err := fetchUser(ctx, user, fetchOpts, parseOpts, fetchTimeout, *fetchRetries)
 			if err != nil {
 				msg := fmt.Sprintf("Failed getting %v: %v", user, err)
 				log.Print(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
+				if *torControlAddr != "" {
+					log.Printf("Sending NEWNYM command to %v to reset Tor circuits", *torControlAddr)
+					if err := resetTorCircuits(*torControlAddr); err != nil {
+						log.Print("Failed resetting Tor circuits: ", err)
+					}
+				}
 				return
+			}
+
+			format := format // shadow value from flag
+			if f := req.FormValue("format"); f != "" {
+				format = feedFormat(f)
 			}
 			if err := writeFeed(w, format, prof, tweets, *replies, skipUsers); err != nil {
 				msg := fmt.Sprintf("Failed writing %v: %v", user, err)
@@ -120,8 +137,10 @@ func main() {
 				return
 			}
 		})
+		log.Printf("Listening on %v", *serveAddr)
 		log.Fatal(http.ListenAndServe(*serveAddr, nil))
 	} else {
+		// Process a single timeline.
 		if len(flag.Args()) != 2 && !*dumpDOM {
 			flag.Usage()
 			os.Exit(2)
@@ -356,6 +375,37 @@ func getFeedLatestID(p string, format feedFormat) (int64, error) {
 		return 0, errors.New("couldn't find latest ID in comment")
 	}
 	return strconv.ParseInt(matches[1], 10, 64)
+}
+
+// resetTorCircuits connects to the supplied host:port (e.g. "localhost:9051")
+// and instructs the Tor service there to reset its circuits to hopefully get
+// a new exit IP. See https://gitweb.torproject.org/torspec.git/tree/control-spec.txt.
+func resetTorCircuits(addr string) error {
+	conn, err := net.DialTimeout("tcp", addr, torControlTimeout)
+	if err != nil {
+		return err
+	}
+
+	dl := time.Now().Add(torControlTimeout)
+	conn.SetReadDeadline(dl)
+	conn.SetWriteDeadline(dl)
+
+	var werr error
+	write := func(s string) {
+		if werr == nil {
+			_, werr = io.WriteString(conn, s)
+		}
+	}
+	// TODO: Add a flag to supply authentication, maybe.
+	write("AUTHENTICATE \"\"\r\n")
+	write("SIGNAL NEWNYM\r\n")
+	write("QUIT\r\n")
+
+	cerr := conn.Close()
+	if werr != nil {
+		return werr
+	}
+	return cerr
 }
 
 // debugParse reads an HTML timeline from p and dumps its tweets to stdout.
