@@ -25,7 +25,7 @@ CMD \
   /etc/init.d/tor start ; \
   ./twittuh -verbose \
     -cache-dir /tmp/twittuh-cache \
-    -fetch-timeout 80 \
+    -fetch-timeout 90 \
     -tweet-timeout 35 \
     -page-settle-delay 10 \
     -proxy socks5://localhost:9050 \
