@@ -148,7 +148,8 @@ and add a line like the following to your crontab:
 [Docker] can be used to run `twittuh -serve` in a container. The
 [Dockerfile](./Dockerfile) in this repository builds a container image that runs
 an instance of `twittuh` listening for HTTP `GET` requests on port 8080. Tor is
-also installed. The HTTP endpoint accepts `user` and `format` query parametrs.
+also installed. The HTTP endpoint accepts `user`, `format`, and `skipUsers`
+query parameters corresponding to the similarly-named flags.
 
 When executed in this directory, the following command uses [Cloud Build] to
 build a container and submit it to the [Container Registry].

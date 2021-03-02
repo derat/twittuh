@@ -99,7 +99,6 @@ func main() {
 
 	format := feedFormat(*formatFlag)
 	fetchTimeout := time.Duration(*fetchTimeoutSec) * time.Second
-	skipUsers := strings.Split(*skipUsersStr, ",")
 
 	if *serveAddr != "" {
 		// Handle HTTP requests.
@@ -129,6 +128,10 @@ func main() {
 			format := format // shadow value from flag
 			if f := req.FormValue("format"); f != "" {
 				format = feedFormat(f)
+			}
+			var skipUsers []string
+			if s := req.FormValue("skipUsers"); s != "" {
+				skipUsers = strings.Split(s, ",")
 			}
 			if err := writeFeed(w, format, prof, tweets, *replies, skipUsers); err != nil {
 				msg := fmt.Sprintf("Failed writing %v: %v", user, err)
@@ -193,6 +196,10 @@ func main() {
 			defer os.Remove(f.Name()) // silently fails if we successfully rename temp file
 		}
 
+		var skipUsers []string
+		if *skipUsersStr != "" {
+			skipUsers = strings.Split(*skipUsersStr, ",")
+		}
 		if err := writeFeed(f, format, prof, tweets, *replies, skipUsers); err != nil {
 			f.Close()
 			log.Fatal("Failed writing feed: ", err)
