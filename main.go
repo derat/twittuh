@@ -115,11 +115,15 @@ func main() {
 			if err != nil {
 				msg := fmt.Sprintf("Failed getting %v: %v", user, err)
 				log.Print(msg)
-				http.Error(w, msg, http.StatusInternalServerError)
-				if *torControlAddr != "" {
-					log.Printf("Sending NEWNYM command to %v to reset Tor circuits", *torControlAddr)
-					if err := resetTorCircuits(*torControlAddr); err != nil {
-						log.Print("Failed resetting Tor circuits: ", err)
+				if err == errTweetsProtected {
+					http.Error(w, msg, http.StatusUnauthorized)
+				} else {
+					http.Error(w, msg, http.StatusInternalServerError)
+					if *torControlAddr != "" {
+						log.Printf("Sending NEWNYM command to %v to reset Tor circuits", *torControlAddr)
+						if err := resetTorCircuits(*torControlAddr); err != nil {
+							log.Print("Failed resetting Tor circuits: ", err)
+						}
 					}
 				}
 				return

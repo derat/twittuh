@@ -15,11 +15,15 @@ import (
 )
 
 const (
-	hasTweetExpr   = `!!document.querySelector('div[data-testid="tweet"]')`
+	hasTweetExpr       = `!!document.querySelector('div[data-testid="tweet"]')`
+	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
+
 	loadFailedExpr = `!!Array.from(document.querySelectorAll('div[role="button"]'))` +
 		`.find(e => e.innerText === 'Try again')`
-	hasTweetCheckDelay = time.Second // time to sleep between running hasTweetExpr
-	showSensitiveExpr  = `Array.from(document.querySelectorAll('article div[role=button]'))` +
+	protectedExpr = `!!Array.from(document.querySelectorAll('span'))` +
+		`.find(e => e.innerText === 'These Tweets are protected')`
+
+	showSensitiveExpr = `Array.from(document.querySelectorAll('article div[role=button]'))` +
 		`.filter(e => e.innerText === 'View').map(e => e.click() || true).length`
 )
 
@@ -32,6 +36,10 @@ type fetchOptions struct {
 	showSensitiveDelay time.Duration
 	logDebug           bool
 }
+
+// errTweetsProtected is returned by fetchTimeline if tweets cannot be loaded because
+// the user limited their account to followers.
+var errTweetsProtected = errors.New("tweets are protected")
 
 // fetchTimeline fetches the timeline page for the supplied user and returns its full DOM.
 func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string, error) {
@@ -77,12 +85,21 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 			debug("Found tweets")
 			break
 		}
+
 		var failed bool
 		if err := chromedp.Run(tctx, chromedp.Evaluate(loadFailedExpr, &failed)); err != nil {
 			return "", fmt.Errorf("failed checking if load failed: %v", err)
 		} else if failed {
 			return "", errors.New("didn't receive tweets (rate-limited?)")
 		}
+
+		var protected bool
+		if err := chromedp.Run(tctx, chromedp.Evaluate(protectedExpr, &protected)); err != nil {
+			return "", fmt.Errorf("failed checking if tweets are protected: %v", err)
+		} else if protected {
+			return "", errTweetsProtected
+		}
+
 		select {
 		case <-tctx.Done():
 			return "", fmt.Errorf("failed loading tweets: %v", tctx.Err())

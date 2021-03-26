@@ -149,7 +149,9 @@ and add a line like the following to your crontab:
 [Dockerfile](./Dockerfile) in this repository builds a container image that runs
 an instance of `twittuh` listening for HTTP `GET` requests on port 8080. Tor is
 also installed. The HTTP endpoint accepts `user`, `format`, and `skipUsers`
-query parameters corresponding to the similarly-named flags.
+query parameters corresponding to the similarly-named flags. It returns a 401
+error if the user has restricted their tweets to followers (i.e. "These Tweets
+are protected").
 
 When executed in this directory, the following command uses [Cloud Build] to
 build a container and submit it to the [Container Registry].
