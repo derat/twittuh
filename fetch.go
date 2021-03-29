@@ -81,25 +81,25 @@ func fetchTimeline(ctx context.Context, user string, opts fetchOptions) (string,
 		// The tctx.Err checks here are ugly, but we want to avoid returning other
 		// misleading errors when the core problem was the deadline being reached.
 		var exists bool
-		if err := chromedp.Run(tctx, chromedp.Evaluate(hasTweetExpr, &exists)); err != nil && tctx.Err == nil {
+		if err := chromedp.Run(tctx, chromedp.Evaluate(hasTweetExpr, &exists)); err != nil && tctx.Err() == nil {
 			return "", fmt.Errorf("failed checking for tweets: %v", err)
 		} else if exists {
 			debug("Found tweets")
 			break
 		}
 
-		if tctx.Err == nil {
+		if tctx.Err() == nil {
 			var failed bool
-			if err := chromedp.Run(tctx, chromedp.Evaluate(loadFailedExpr, &failed)); err != nil && tctx.Err == nil {
+			if err := chromedp.Run(tctx, chromedp.Evaluate(loadFailedExpr, &failed)); err != nil && tctx.Err() == nil {
 				return "", fmt.Errorf("failed checking if load failed: %v", err)
 			} else if failed {
 				return "", errors.New("didn't receive tweets (rate-limited?)")
 			}
 		}
 
-		if tctx.Err == nil {
+		if tctx.Err() == nil {
 			var protected bool
-			if err := chromedp.Run(tctx, chromedp.Evaluate(protectedExpr, &protected)); err != nil && tctx.Err == nil {
+			if err := chromedp.Run(tctx, chromedp.Evaluate(protectedExpr, &protected)); err != nil && tctx.Err() == nil {
 				return "", fmt.Errorf("failed checking if tweets are protected: %v", err)
 			} else if protected {
 				return "", errTweetsProtected
