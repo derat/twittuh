@@ -5,6 +5,11 @@
 `twittuh` is a Go program that loads a user's Twitter timeline using a [headless
 Chrome] browser and generates an RSS feed containing their tweets.
 
+**2021-04-08: I'm unlikely to put more effort into this, as it's becoming
+exceedingly hard to make the headless-Chrome approach work reliably on low-spec
+VPSes. I recommend looking at [Nitter], which also provides RSS feeds of
+timelines.**
+
 I don't have (or want) a Twitter account, and I found myself repeatedly clicking
 on a dozen or so bookmarks to check for updates. It felt like I was in the
 year 2000. Thanks to this program, I can use an RSS reader to monitor these
@@ -16,6 +21,7 @@ this program uses Chrome to construct the complete DOM (i.e. by executing
 JavaScript) and parses that instead.
 
 [headless Chrome]: https://developers.google.com/web/updates/2017/04/headless-chrome
+[Nitter]: https://github.com/zedeus/nitter
 [Twitter shut down the interface]: https://screenrant.com/twitter-legacy-nintendo-3ds-shut-down-date-december-2020/
 
 ## Installation
