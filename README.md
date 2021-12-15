@@ -1,6 +1,6 @@
 # twittuh
 
-![Build Status](https://storage.googleapis.com/derat-build-badges/fb01aa0f-16d4-4d9a-b229-c83a71082a32.svg)
+[![Build Status](https://storage.googleapis.com/derat-build-badges/fb01aa0f-16d4-4d9a-b229-c83a71082a32.svg)](https://storage.googleapis.com/derat-build-badges/fb01aa0f-16d4-4d9a-b229-c83a71082a32.html)
 
 `twittuh` is a Go program that loads a user's Twitter timeline using a [headless
 Chrome] browser and generates an RSS feed containing their tweets.

@@ -2,7 +2,3 @@ steps:
   - name: golang
     entrypoint: go
     args: ["test", "-v", "./..."]
-
-tags:
-  - commit-$COMMIT_SHA
-  - trigger-name-$TRIGGER_NAME
