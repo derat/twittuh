@@ -8,5 +8,5 @@ require (
 	github.com/google/go-cmp v0.5.0
 	github.com/gorilla/feeds v1.1.1
 	github.com/kr/pretty v0.2.1 // indirect
-	golang.org/x/net v0.0.0-20210326060303-6b1517762897
+	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
 )
